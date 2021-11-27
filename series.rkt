@@ -14,21 +14,12 @@
   ;; Series K -> V
   (series-ref series k)
 
-  #:defaults
-  ([immutable-vector?
-    (define (series-name vec) #f)
-
-    (define (series-index vec)
-      (identity-index (vector-length vec)))
-
-    (define (series-store vec) vec)])
-
   #:fallbacks
-  [(define (series-ref s i) (default-series-ref s i))])
-
-(define (default-series-ref s i)
-  (define j (index-lookup (series-index s) i))
-  (vector-ref (series-store s) j))
+  [(define/generic series-index^ series-index)
+   (define/generic series-store^ series-store)
+   (define (series-ref s i)
+     (define j (index-lookup (series-index^ s) i))
+     (vector-ref (series-store^ s) j))])
 
 (struct basic-series (name index store)
   #:methods gen:series
@@ -36,4 +27,25 @@
    (define (series-index s) (basic-series-index s))
    (define (series-store s) (basic-series-store s))])
 
+(define (->series name seq)
+  (cond
+    [(hash? seq) (->series/hash name seq)]
+    [else (->series/seq name seq)]))
+
+(define (->series/hash name hsh)
+  (define store (make-vector (hash-count hsh)))
+  (define index
+    (for/fold ([index (hash)])
+              ([(k v) (in-hash hsh)]
+               [i (in-naturals)])
+      (vector-set! store i v)
+      (hash-set index k i)))
+  (basic-series name index (vector->immutable-vector store)))
+
+(define (->series/seq name seq)
+  (define-values (store len)
+    (sequence->list/length seq))
+  (basic-series name
+                (seq-identity-index len)
+                (list->immutable-vector store)))
 

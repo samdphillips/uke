@@ -7,8 +7,10 @@
          index?
          index-lookup
          index-indices
+         index-sequential?
+         index-size
 
-         (struct-out identity-index))
+         (struct-out seq-identity-index))
 
 (module+ test
   (require racket/sequence
@@ -20,6 +22,8 @@
   (index-lookup index i)
   ;; index-indices :: Index -> Sequenceof i
   (index-indices index)
+  ;; index-size :: Index -> Integer
+  (index-size index)
   ;; index-compose :: Index Index -> Index
   (index-compose index other-index)
   ;; index-sequential? :: Index -> Boolean
@@ -34,6 +38,9 @@
 
     (define (index-indices vec)
       (in-range 0 (vector-length vec)))
+
+    (define (index-size vec)
+      (vector-length vec))
 
     (define (index-compose vec idx)
       (define new-pointers
@@ -51,6 +58,9 @@
 
     (define (index-indices hsh)
       (in-hash-keys hsh))
+
+    (define (index-size hsh)
+      (hash-count hsh))
 
     (define (index-compose hsh idx)
       (for/hash ([(k v) (in-hash hsh)])
@@ -93,33 +103,36 @@
     (check-equal? (index-compose j i)
                   (hash 'a 'd 'b 'c 'c 'b 'd 'a))))
 
-(struct identity-index (size)
+(struct seq-identity-index (size)
   #:methods gen:index
   [(define/generic index-lookup^ index-lookup)
 
    (define (index-lookup ii i) i)
 
    (define (index-indices ii)
-     (in-range (identity-index-size ii)))
+     (in-range (seq-identity-index-size ii)))
+
+   (define (index-size ii)
+     (seq-identity-index-size ii))
 
    (define (index-compose i j)
      (cond
-       [(identity-index? j)
-        (if (< (identity-index-size j)
-               (identity-index-size i))
+       [(seq-identity-index? j)
+        (if (< (seq-identity-index-size j)
+               (seq-identity-index-size i))
             (error 'index-compose
                    "identity indexes are incompatible sizes ~a ~a"
-                   (identity-index-size i)
-                   (identity-index-size j))
+                   (seq-identity-index-size i)
+                   (seq-identity-index-size j))
             i)]
        [else
         (apply vector-immutable
-               (for/list ([i (in-range (identity-index-size i))])
+               (for/list ([i (in-range (seq-identity-index-size i))])
                  (index-lookup^ j i)))]))
 
    (define (index-sequential? ii) #t)])
 
 (module+ test
-  (let ([idx (identity-index 10)])
+  (let ([idx (seq-identity-index 10)])
     (check-equal? (index-lookup idx 0) 0)
     (check-equal? (index-lookup idx 9) 9)))
