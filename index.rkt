@@ -42,10 +42,10 @@
     (define (index-size vec)
       (vector-length vec))
 
-    (define (index-compose vec idx)
+    (define (index-compose a-vector an-index)
       (define new-pointers
-        (for/list ([i (in-vector vec)])
-          (index-lookup^ idx i)))
+        (for/list ([i (in-vector a-vector)])
+          (index-lookup^ an-index i)))
       (apply vector-immutable new-pointers))
 
     (define (index-sequential? vec) #t)]

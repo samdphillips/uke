@@ -1,8 +1,19 @@
 #lang racket/base
 
 (require racket/generic
+         racket/vector
          "index.rkt"
          "util.rkt")
+
+(provide series?
+         series-name
+         series-index
+         series-store
+         series-ref
+         ->series
+         hash->series
+         vector->series
+         sequence->series)
 
 (define-generics series
   ;; series-name :: Series -> String / #f
@@ -29,10 +40,11 @@
 
 (define (->series name seq)
   (cond
-    [(hash? seq) (->series/hash name seq)]
-    [else (->series/seq name seq)]))
+    [(hash? seq) (hash->series name seq)]
+    [(vector? seq) (vector->series name seq)]
+    [else (sequence->series name seq)]))
 
-(define (->series/hash name hsh)
+(define (hash->series name hsh)
   (define store (make-vector (hash-count hsh)))
   (define index
     (for/fold ([index (hash)])
@@ -42,7 +54,12 @@
       (hash-set index k i)))
   (basic-series name index (vector->immutable-vector store)))
 
-(define (->series/seq name seq)
+(define (vector->series name vec [size (vector-length vec)])
+  (basic-series name
+                (seq-identity-index size)
+                (vector-copy vec 0 size)))
+
+(define (sequence->series name seq)
   (define-values (store len)
     (sequence->list/length seq))
   (basic-series name
