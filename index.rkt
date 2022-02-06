@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/generic
+         racket/unsafe/ops
          "util.rkt")
 
 (provide gen:index
@@ -9,6 +10,7 @@
          index-indices
          index-sequential?
          index-size
+         index-compose
 
          (struct-out seq-identity-index))
 
@@ -43,10 +45,13 @@
       (vector-length vec))
 
     (define (index-compose a-vector an-index)
-      (define new-pointers
-        (for/list ([i (in-vector a-vector)])
-          (index-lookup^ an-index i)))
-      (apply vector-immutable new-pointers))
+      (cond
+        [(seq-identity-index? an-index) a-vector]
+        [else
+         (define new-pointers
+           (for/list ([i (in-vector a-vector)])
+             (index-lookup^ an-index i)))
+         (apply vector-immutable new-pointers)]))
 
     (define (index-sequential? vec) #t)]
 
@@ -62,9 +67,12 @@
     (define (index-size hsh)
       (hash-count hsh))
 
-    (define (index-compose hsh idx)
-      (for/hash ([(k v) (in-hash hsh)])
-        (values k (index-lookup^ idx v))))
+    (define (index-compose a-hash idx)
+      (cond
+        [(seq-identity-index? idx) a-hash]
+        [else
+         (for/hash ([(k v) (in-hash a-hash)])
+           (values k (index-lookup^ idx v)))]))
 
     (define (index-sequential? hsh) #f)]))
 
@@ -106,29 +114,32 @@
 (struct seq-identity-index (size)
   #:methods gen:index
   [(define/generic index-lookup^ index-lookup)
+   (define/generic index-size^   index-size)
 
-   (define (index-lookup ii i) i)
+   (define (index-lookup id-idx i)
+     (unless (and (<= 0 i) (< i (seq-identity-index-size id-idx)))
+       (error 'index-lookup "lookup index is out of bounds: ~a" i))
+     i)
 
-   (define (index-indices ii)
-     (in-range (seq-identity-index-size ii)))
+   (define (index-indices id-idx)
+     (in-range (seq-identity-index-size id-idx)))
 
-   (define (index-size ii)
-     (seq-identity-index-size ii))
+   (define (index-size id-idx)
+     (seq-identity-index-size id-idx))
 
-   (define (index-compose i j)
+   (define (index-compose id-idx j)
+     (define id-idx-size (seq-identity-index-size id-idx))
+     (when (< (index-size^ j) id-idx-size)
+       (error 'index-compose
+              "indexes are incompatible sizes ~a > ~a"
+              id-idx-size
+              (index-size^ j)))
      (cond
-       [(seq-identity-index? j)
-        (if (< (seq-identity-index-size j)
-               (seq-identity-index-size i))
-            (error 'index-compose
-                   "identity indexes are incompatible sizes ~a ~a"
-                   (seq-identity-index-size i)
-                   (seq-identity-index-size j))
-            i)]
+       [(seq-identity-index? j) id-idx]
        [else
-        (apply vector-immutable
-               (for/list ([i (in-range (seq-identity-index-size i))])
-                 (index-lookup^ j i)))]))
+        (unsafe-vector*->immutable-vector!
+         (for/vector #:length id-idx-size ([i (in-range id-idx-size)])
+           (index-lookup^ j i)))]))
 
    (define (index-sequential? ii) #t)])
 
