@@ -3,7 +3,8 @@
 (provide immutable-vector?
          immutable-hash?
          list->immutable-vector
-         sequence->list/length)
+         sequence->list/length
+         vector-valid-position?)
 
 (define ((make-immutable-pred pred?) v)
   (and (pred? v) (immutable? v)))
@@ -25,4 +26,7 @@
       [else
        (values null 0)]))
   (loop))
+
+(define (vector-valid-position? a-vector pos)
+  (and (<= 0 pos) (< pos (vector-length a-vector))))
 
