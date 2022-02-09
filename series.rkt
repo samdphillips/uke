@@ -1,8 +1,10 @@
 #lang racket/base
 
 (require racket/generic
+         racket/unsafe/ops
          racket/vector
          "index.rkt"
+         "store.rkt"
          "util.rkt")
 
 (provide series?
@@ -18,19 +20,22 @@
 (define-generics series
   ;; series-name :: Series -> String / #f
   (series-name series)
+
   ;; series-index :: Series -> Index
   (series-index series)
-  ;; Series -> Vector
+
+  ;; Series -> Store
   (series-store series)
+
   ;; Series K -> V
   (series-ref series k)
 
   #:fallbacks
-  [(define/generic series-index^ series-index)
-   (define/generic series-store^ series-store)
+  [(define/generic ^series-index series-index)
+   (define/generic ^series-store series-store)
    (define (series-ref s i)
-     (define j (index-lookup (series-index^ s) i))
-     (vector-ref (series-store^ s) j))])
+     (define j (index-lookup (^series-index s) i))
+     (store-ref (^series-store s) j))])
 
 (struct basic-series (name index store)
   #:methods gen:series
@@ -40,7 +45,7 @@
 
 (define (->series name seq)
   (cond
-    [(hash? seq) (hash->series name seq)]
+    [(hash? seq)   (hash->series name seq)]
     [(vector? seq) (vector->series name seq)]
     [else (sequence->series name seq)]))
 
@@ -54,10 +59,20 @@
       (hash-set index k i)))
   (basic-series name index (vector->immutable-vector store)))
 
-(define (vector->series name vec [size (vector-length vec)])
+;; XXX An index could be used to just use subset of the elements?  Also it
+;; could handle a slice?  Probably better than current interface.
+(define (vector->series name a-vector [size #f])
+  (define series-size   (or size (vector-length a-vector)))
+  (define series-vector
+    (if (immutable? a-vector)
+        a-vector
+        (unsafe-vector*->immutable-vector!
+          (if size
+              (vector-copy a-vector 0 size)
+              (vector-copy a-vector)))))
   (basic-series name
-                (seq-identity-index size)
-                (vector-copy vec 0 size)))
+                (seq-identity-index series-size)
+                series-vector))
 
 (define (sequence->series name seq)
   (define-values (store len)
@@ -65,4 +80,3 @@
   (basic-series name
                 (seq-identity-index len)
                 (list->immutable-vector store)))
-
