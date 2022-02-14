@@ -27,12 +27,16 @@
 (define-generics index
   ;; index-lookup :: Index i -> j
   (index-lookup index i)
+
   ;; index-indices :: Index -> Sequenceof i
   (index-indices index)
+
   ;; index-size :: Index -> Integer
   (index-size index)
+
   ;; index-compose :: Index Index -> Index
   (index-compose index other-index)
+
   ;; index-sequential? :: Index -> Boolean
   (index-sequential? index)
 
@@ -131,6 +135,7 @@
                   (hash 'a 'd 'b 'c 'c 'b 'd 'a))))
 
 (struct seq-identity-index (size)
+  #:transparent
   #:methods gen:index
   [(define/generic ^index-lookup index-lookup)
    (define/generic ^index-sequential? index-sequential?)
@@ -140,7 +145,8 @@
      (unless (and (<= 0 pos) (< pos (seq-identity-index-size id-idx)))
        (raise-uke-error exn:uke:index
                         'index-lookup
-                        "lookup index is out of bounds: ~a"
+                        "lookup index is out of bounds:\n  index-size: ~a\n  position: ~a"
+                        (seq-identity-index-size id-idx)
                         pos))
      pos)
 

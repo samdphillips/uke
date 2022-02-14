@@ -5,6 +5,10 @@
          "series.rkt")
 
 (provide (struct-out dataframe)
+         dataframe-num-rows
+         dataframe-series
+         dataframe-series-ref
+         dataframe-add-series*
          for/dataframe)
 
 (struct dataframe (index series*))
@@ -16,6 +20,30 @@
 
 (define (make-dataframe a-series-list #:index [an-index (compatible-index a-series-list)])
   (dataframe an-index a-series-list))
+
+(define (dataframe-num-rows df)
+  (index-size (dataframe-index df)))
+
+(define (dataframe-series a-dataframe)
+  (define an-index (dataframe-index a-dataframe))
+  (for/list ([a-series (in-list (dataframe-series* a-dataframe))])
+    (series-push-index a-series an-index)))
+
+(define (dataframe-series-ref df a-series-name)
+  (for/first ([a-series (in-list (dataframe-series* df))]
+              #:when (equal? (series-name a-series)
+                             a-series-name))
+    (series-push-index a-series (dataframe-index df))))
+
+(define (dataframe-add-series* df . new-series)
+  ;; XXX check that new-series index is compatible with the dataframe index
+  (define df-idx (dataframe-index df))
+  (define series*
+    (for/list ([a-series (in-list (dataframe-series* df))])
+      (series-push-index a-series df-idx)))
+  (struct-copy dataframe df
+               [index   (seq-identity-index (index-size df-idx))]
+               [series* (append series* new-series)]))
 
 (struct dataframe-builder (column-names num-rows columns) #:mutable)
 

@@ -12,6 +12,7 @@
          series-index
          series-store
          series-ref
+         series-push-index
          ->series
          hash->series
          vector->series
@@ -80,3 +81,9 @@
   (basic-series name
                 (seq-identity-index len)
                 (list->immutable-vector store)))
+
+;; XXX only implemented for basic-series, maybe series should be a struct type
+;; not a generic.
+(define (series-push-index a-series an-index)
+  (define new-index (index-compose an-index (series-index a-series)))
+  (struct-copy basic-series a-series [index new-index]))
