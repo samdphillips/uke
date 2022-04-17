@@ -1,15 +1,20 @@
 #lang racket/base
 
 (require (for-syntax racket/base)
-         syntax/parse/define)
+         racket/unsafe/ops
+         syntax/parse/define
+         uke/dataframe
+         uke/index
+         uke/series)
 
 (provide where)
 
 ;; XXX needs to also work with categorical index
 (define-syntax-parse-rule (where df-expr (binder:id ...) body ...+)
+  #:declare df-expr (expr/c #'dataframe?)
   #:with (binder-series ...) (generate-temporaries #'(binder ...))
   (let ()
-    (define df df-expr)
+    (define df df-expr.c)
     ;; XXX check df for column names
     (define binder-series (dataframe-series-ref df 'binder)) ...
     (define (pred? binder ...)
