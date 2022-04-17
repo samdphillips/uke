@@ -9,6 +9,7 @@
          dataframe-series
          dataframe-series-ref
          dataframe-add-series*
+         dataframe-remove-series*
          for/dataframe)
 
 (struct dataframe (index series*))
@@ -44,6 +45,13 @@
   (struct-copy dataframe df
                [index   (seq-identity-index (index-size df-idx))]
                [series* (append series* new-series)]))
+
+(define (dataframe-remove-series* df . series-names)
+  (define series*
+    (for/list ([a-series (in-list (dataframe-series* df))]
+               #:unless (memq (series-name a-series) series-names))
+      a-series))
+  (struct-copy dataframe df [series* series*]))
 
 (struct dataframe-builder (column-names num-rows columns) #:mutable)
 
