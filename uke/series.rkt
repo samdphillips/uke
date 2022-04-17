@@ -13,6 +13,7 @@
          series-store
          series-ref
          series-push-index
+         series-inspect
          ->series
          hash->series
          vector->series
@@ -37,6 +38,12 @@
    (define (series-ref s i)
      (define j (index-lookup (^series-index s) i))
      (store-ref (^series-store s) j))])
+
+(define (series-inspect s)
+  (list 'series
+        (cons 'name (series-name s))
+        (index-inspect (series-index s))
+        (cons 'store (series-store s))))
 
 (struct basic-series (name index store)
   #:methods gen:series

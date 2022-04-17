@@ -8,6 +8,7 @@
 (provide gen:index
          index?
          index-lookup
+         index-inspect
          index-indices
          index-sequential?
          index-size
@@ -87,6 +88,9 @@
         (values k (^index-lookup idx v))))
 
     (define (index-sequential? hsh) #f)]))
+
+(define (index-inspect i)
+  (list 'index (cons 'size (index-size i)) i))
 
 (module+ test
   (check-equal? (sequence->list (index-indices (vector-immutable))) null)

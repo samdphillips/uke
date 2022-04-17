@@ -5,6 +5,7 @@
          "series.rkt")
 
 (provide (struct-out dataframe)
+         dataframe-inspect
          dataframe-num-rows
          dataframe-series
          dataframe-series-ref
@@ -13,6 +14,11 @@
          for/dataframe)
 
 (struct dataframe (index series*))
+
+(define (dataframe-inspect df)
+  (list 'dataframe
+        (index-inspect (dataframe-index df))
+        (map series-inspect (dataframe-series* df))))
 
 ;; XXX: actually compute a compatible index
 ;; XXX: move to index.rkt
