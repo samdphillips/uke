@@ -13,7 +13,7 @@
          dataframe-remove-series*
          for/dataframe)
 
-(struct dataframe (index series*))
+(struct dataframe (index series*) #:transparent)
 
 (define (dataframe-inspect df)
   (list 'dataframe
@@ -25,7 +25,8 @@
 (define (compatible-index a-series-list)
   (series-index (car a-series-list)))
 
-(define (make-dataframe a-series-list #:index [an-index (compatible-index a-series-list)])
+(define (make-dataframe a-series-list
+                        #:index [an-index (compatible-index a-series-list)])
   (dataframe an-index a-series-list))
 
 (define (dataframe-num-rows df)
@@ -106,7 +107,8 @@
     (define col (dataframe-builder-column-maybe-grow nri columns i))
     (vector-set! col ri val)))
 
-(define-syntax-parse-rule (for/dataframe (column-names:id ...) for-clauses body ...)
+(define-syntax-parse-rule
+  (for/dataframe (column-names:id ...) for-clauses body ...)
   #:with this-syntax this-syntax
   (let ([builder (make-dataframe-builder '(column-names ...))])
     (for/fold/derived this-syntax
@@ -115,7 +117,8 @@
                       (call-with-values
                         (lambda () body ...)
                         (lambda (column-names ...)
-                          (dataframe-builder-add-row! builder (list column-names ...))
+                          (dataframe-builder-add-row!
+                           builder (list column-names ...))
                           (values))))
     (dataframe-builder-build builder)))
 
