@@ -24,6 +24,9 @@
          linear-index-offset
          linear-index-stride)
 
+(module* for-test #f
+  (provide (struct-out linear-index)))
+
 ;; index-ref
 ;; index-size
 ;; index-compose
