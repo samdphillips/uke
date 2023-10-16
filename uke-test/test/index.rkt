@@ -2,7 +2,9 @@
 
 (require racket/sequence
          rackunit
-         uke/index)
+         uke/index
+         (submod uke/index for-test)
+         uke/transient)
 
 (test-case "linear identity index"
   (define idx (make-linear-index 10))
@@ -18,17 +20,32 @@
   (check-exn exn:uke:index? (lambda () (index-ref idx 10)))
   (check-exn exn:uke:index? (lambda () (index-ref idx 100))))
 
-(test-case "identity/identity same index compose"
+(test-case "identity/identity same index-compose"
   (define i (make-linear-index 10))
   (define j (index-compose i i))
   (check-equal? (index-size j) 10))
 
-(test-case "identity/identity smaller index compose"
+(test-case "identity/identity smaller index-compose"
   (define i (make-linear-index 10))
   (define j (make-linear-index 20))
   (define k (index-compose j i))
   (check-equal? (index-size k) 10)
   (check-exn exn:uke:index? (lambda () (index-compose i j))))
+
+(test-case "identity/identity index-compose"
+  (define i (make-linear-index 10 0 2))
+  (define j (make-linear-index 10))
+  (define k (index-compose i j))
+  (check-match k (linear-index _ 10 0 2)))
+
+;; XXX: this should fail, range of i1 is greater than the domain of i0
+;; (index-compose (make-linear-index 10) (make-linear-index 10 0 2))
+
+(test-case "identity/identity index-compose!"
+  (define i (transient (make-linear-index 10 0 2)))
+  (define j (make-linear-index 10))
+  (define k (persistent! (index-compose! i j)))
+  (check-match k (linear-index _ 10 0 2)))
 
 (check-equal? (index-size (make-vector-index #())) 0)
 
@@ -49,22 +66,21 @@
 
   (define ii (index-compose i i))
   (check-true (vector-index? ii))
-  (check-true (immutable? (vector-index-mapping ii)))
 
   (define jj (index-compose j j))
   (check-true (vector-index? jj))
-  (check-true (immutable? (vector-index-mapping jj)))
+
+  (check-not-eq? ii jj)
 
   (check-equal? ii j)
   (check-equal? jj j))
 
 (test-case "identity/vector index compose"
   (define i (make-linear-index 3))
-  (define j (make-vector-index (vector-immutable 2 1 0)))
+  (define j (make-vector-index (vector 2 1 0)))
 
   (define ij (index-compose i j))
   (check-true (vector-index? ij))
-  (check-true (immutable? (vector-index-mapping ij)))
   (check-equal? (index-size ij) 3)
   (check-equal? (for/list ([t (in-indices ij)])
                   (index-ref ij t))
@@ -78,10 +94,9 @@
 
 (test-case "identity/vector smaller index compose"
   (define i (make-linear-index 3))
-  (define j (make-vector-index (vector-immutable 3 2 1 0)))
+  (define j (make-vector-index (vector 3 2 1 0)))
   (define ji (index-compose j i))
   (check-true (vector-index? ji))
-  (check-true (immutable? (vector-index-mapping ji)))
   (check-equal? (index-size ji) 3)
   (check-equal? (for/list ([t (in-indices ji)])
                   (index-ref ji t))

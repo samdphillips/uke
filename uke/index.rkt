@@ -2,7 +2,8 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
-         racket/unsafe/ops
+         racket/vector
+         "transient.rkt"
          "error.rkt")
 
 (provide prop:index
@@ -10,6 +11,7 @@
          index-ref
          index-size
          index-compose
+         index-compose!
          in-indices
 
          exn:uke:index?
@@ -18,7 +20,6 @@
          linear-index?
 
          make-vector-index
-         vector-index-mapping
 
          make-linear-index
          linear-index-offset
@@ -30,7 +31,8 @@
 ;; index-ref
 ;; index-size
 ;; index-compose
-;; XXX maybe needs property guard
+;; index-compose!
+;; XXX probably needs property guard
 (define-values (prop:index index? index-ops)
   (make-struct-type-property 'index))
 
@@ -52,18 +54,26 @@
                      (index-size i0)
                      (index-size i1))))
 
-(define (index-ref idx i)
+(define (index-ref t/idx i)
+  (define idx (resolve-transient t/idx))
   (check-index-bounds 'index-ref idx i)
   (apply-index-op idx 0 i))
 
-(define (index-size idx)
-  (apply-index-op idx 1))
+(define (index-size t/idx)
+  (apply-index-op (resolve-transient t/idx) 1))
 
 (define (index-compose i0 i1)
   (check-index-sizes-compatible 'index-compose i1 i0)
   (cond
     [(get-index-op i0 2) => (λ (f) (f i0 i1))]
     [else (generic-index-compose i0 i1)]))
+
+(define-transient-proc (index-compose! t i0 i1)
+  (check-index-sizes-compatible 'index-compose! i1 i0)
+  (cond
+    [(get-index-op i0 3) => (λ (f) (f t i0 i1))]
+    [else
+     (generic-index-compose! t i0 i1)]))
 
 ;; XXX in-indices should probably work on indexes, series, and dataframes.
 (define in-indices-sequence
@@ -78,39 +88,68 @@
     [(v:id (in-indices an-index)) #'(v (in-range (index-size an-index)))]
     [_ #f]))
 
+(define (do-generic-index-compose i0 i1)
+  (for/vector #:length (index-size i1) ([i (in-indices i1)])
+    (index-ref i0 (index-ref i1 i))))
+
 (define (generic-index-compose i0 i1)
-  (define n (index-size i1))
-  (define vec
-    (unsafe-vector*->immutable-vector!
-     (for/vector #:length n ([i (in-range n)])
-       (index-ref i0 (index-ref i1 i)))))
-  (vector-index vec))
+  (vector-index #f (do-generic-index-compose i0 i1)))
+
+(define (generic-index-compose! t i0 i1)
+  (vector-index (transient-key t) (do-generic-index-compose i0 i1)))
 
 (define (linear-index-ref idx i)
   (check-index-bounds 'index-ref idx i)
   (+ (linear-index-offset idx)
      (* (linear-index-stride idx) i)))
 
+(define (do-linear-index-compose i0 i1)
+  (define o0 (linear-index-offset i0))
+  (define s0 (linear-index-stride i0))
+  (define o1 (linear-index-offset i1))
+  (define s1 (linear-index-stride i1))
+  (values(index-size i1)
+         (+ o0 (* s0 o1))
+         (* s0 s1)))
+
 (define (linear-index-compose i0 i1)
   (cond
     [(not (linear-index? i1)) (generic-index-compose i0 i1)]
-    [else (define o0 (linear-index-offset i0))
-          (define s0 (linear-index-stride i0))
-          (define o1 (linear-index-offset i1))
-          (define s1 (linear-index-stride i1))
-          (linear-index (index-size i1)
-                        (+ o0 (* s0 o1))
-                        (* s0 s1))]))
+    [else
+     (call-with-values
+      (λ () (do-linear-index-compose i0 i1))
+      make-linear-index)]))
 
-(struct linear-index (size offset stride)
+(define-transient-proc (linear-index-compose! t i0 i1)
+  (cond
+    [(not (linear-index? i1)) (generic-index-compose! t i0 i1)]
+    [else
+     (define-values (sz of st) (do-linear-index-compose i0 i1))
+     (transient-case t i0
+                     [(set-linear-index-size! i0 sz)
+                      (set-linear-index-offset! i0 of)
+                      (set-linear-index-stride! i0 st)
+                      i0]
+                     [(linear-index (transient-key t)
+                                    sz
+                                    of
+                                    st)])]))
+
+(struct linear-index (key
+                      [size #:mutable]
+                      [offset #:mutable]
+                      [stride #:mutable])
   #:transparent
+  #:property prop:transient-target
+  (struct-field-index key)
   #:property prop:index
   (vector linear-index-ref
           (λ (idx) (linear-index-size idx))
-          linear-index-compose))
+          linear-index-compose
+          linear-index-compose!))
 
 (define (make-linear-index size [offset 0] [stride 1])
-  (linear-index size offset stride))
+  (linear-index #f size offset stride))
 
 (define (vector-index-ref idx i)
   (check-index-bounds 'index-ref idx i)
@@ -119,7 +158,7 @@
 (define (vector-index-size idx)
   (vector-length (vector-index-mapping idx)))
 
-(struct vector-index (mapping)
+(struct vector-index (key [mapping #:mutable])
   #:transparent
   #:property prop:index
   (vector vector-index-ref
@@ -127,4 +166,4 @@
           #f))
 
 (define (make-vector-index vec)
-  (vector-index (vector->immutable-vector vec)))
+  (vector-index #f (vector-copy vec)))
