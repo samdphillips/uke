@@ -18,7 +18,6 @@
          linear-index?
 
          make-vector-index
-         vector-index-mapping
 
          make-linear-index
          linear-index-offset
@@ -30,7 +29,8 @@
 ;; index-ref
 ;; index-size
 ;; index-compose
-;; XXX maybe needs property guard
+;; index-compose!
+;; XXX probably needs property guard
 (define-values (prop:index index? index-ops)
   (make-struct-type-property 'index))
 
@@ -78,29 +78,37 @@
     [(v:id (in-indices an-index)) #'(v (in-range (index-size an-index)))]
     [_ #f]))
 
+(define (do-generic-index-compose i0 i1)
+  (for/vector #:length (index-size i1) ([i (in-indices i1)])
+    (index-ref i0 (index-ref i1 i))))
+
 (define (generic-index-compose i0 i1)
-  (define n (index-size i1))
-  (define vec
-    (unsafe-vector*->immutable-vector!
-     (for/vector #:length n ([i (in-range n)])
-       (index-ref i0 (index-ref i1 i)))))
-  (vector-index vec))
+  ;; do-generic-index-compose must return a fresh vector
+  (make-vector-index
+   (unsafe-vector*->immutable-vector!
+     (do-generic-index-compose i0 i1))))
 
 (define (linear-index-ref idx i)
   (check-index-bounds 'index-ref idx i)
   (+ (linear-index-offset idx)
      (* (linear-index-stride idx) i)))
 
+(define (do-linear-index-compose i0 i1)
+  (define o0 (linear-index-offset i0))
+  (define s0 (linear-index-stride i0))
+  (define o1 (linear-index-offset i1))
+  (define s1 (linear-index-stride i1))
+  (values (index-size i1)
+          (+ o0 (* s0 o1))
+          (* s0 s1)))
+
 (define (linear-index-compose i0 i1)
   (cond
     [(not (linear-index? i1)) (generic-index-compose i0 i1)]
-    [else (define o0 (linear-index-offset i0))
-          (define s0 (linear-index-stride i0))
-          (define o1 (linear-index-offset i1))
-          (define s1 (linear-index-stride i1))
-          (linear-index (index-size i1)
-                        (+ o0 (* s0 o1))
-                        (* s0 s1))]))
+    [else
+     (call-with-values
+      (λ () (do-linear-index-compose i0 i1))
+      make-linear-index)]))
 
 (struct linear-index (size offset stride)
   #:transparent
