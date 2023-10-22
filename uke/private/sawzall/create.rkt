@@ -10,7 +10,6 @@
 
 (provide create)
 
-;; XXX how would this work with categorical index
 (define-syntax-parse-rule (create df-expr column:create-column-spec ...)
   #:declare df-expr (expr/c #'dataframe?)
   (let ()
@@ -22,12 +21,11 @@
     (define-values (column.series-id ...)
       (values (dataframe-series-ref df 'column.binder) ...)) ...
     (define dfi (dataframe-index df))
-    (for ([i (index-indices dfi)])
+    (for ([i (in-indices dfi)])
       (vector-set! column.vec-id i
                    (column.func-id (series-ref column.series-id i) ...))
       ...)
-    (dataframe-add-series* df
+    (dataframe-add-series* (dataframe-remove-series* df 'column.name ...)
                            (vector->series 'column.name
                                            (unsafe-vector*->immutable-vector!
                                             column.vec-id)) ...)))
-

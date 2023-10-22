@@ -2,6 +2,7 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
+         racket/sequence
          racket/unsafe/ops
          "error.rkt")
 
@@ -11,6 +12,8 @@
          index-size
          index-compose
          in-indices
+
+         index-sort
 
          exn:uke:index?
 
@@ -77,6 +80,11 @@
   (syntax-parser
     [(v:id (in-indices an-index)) #'(v (in-range (index-size an-index)))]
     [_ #f]))
+
+(define (index-sort idx lt?)
+  (make-vector-index
+   (list->vector
+    (sort (sequence->list (in-indices-sequence idx)) lt?))))
 
 (define (do-generic-index-compose i0 i1)
   (for/vector #:length (index-size i1) ([i (in-indices i1)])

@@ -16,7 +16,7 @@
        (for/list ([col (in-list series)])
          (series-name col))
        (for/list ([n (in-range nrows)]
-                  [i (index-indices idx)])
+                  [i (in-range (index-size idx))])
          (for/list ([col (in-list series)])
            (series-ref col i))))))
   (print-uni-table table
@@ -28,4 +28,3 @@
                    '((wrap))
                    #:col-borders '((light))
                    #:row-borders '((light))))
-

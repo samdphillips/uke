@@ -22,9 +22,9 @@
       result)
     (define new-index
       (index-compose
-       (unsafe-vector*->immutable-vector!
-        (for/vector ([i (index-indices (dataframe-index df))]
-                     #:when (pred? (series-ref binder-series i) ...)) i))
-       (dataframe-index df)))
+       (dataframe-index df)
+       (make-vector-index
+        (unsafe-vector*->immutable-vector!
+         (for/vector ([i (in-indices (dataframe-index df))]
+                      #:when (pred? (series-ref binder-series i) ...)) i)))))
     (struct-copy dataframe df [index new-index])))
-

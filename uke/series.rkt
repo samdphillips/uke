@@ -7,7 +7,8 @@
          "store.rkt"
          "util.rkt")
 
-(provide series?
+(provide make-series
+         series?
          series-name
          series-index
          series-store
@@ -22,6 +23,9 @@
   #:property prop:sequence
   (λ (s) (sequence-map (λ (i) (series-ref s i))
                        (in-indices (series-index s)))))
+
+(define (make-series name index store)
+  (series name index store))
 
 (define (series-ref a-series i)
   (store-ref (series-store a-series) (index-ref (series-index a-series) i)))
@@ -40,15 +44,15 @@
     [else
      (define i series-offset)
      (define j (+ series-offset series-size))
-     (series name
-             (make-linear-index series-size 0 1)
-             (unsafe-vector*->immutable-vector!
-              (vector-copy vec i j)))]))
+     (make-series name
+                  (make-linear-index series-size 0 1)
+                  (unsafe-vector*->immutable-vector!
+                   (vector-copy vec i j)))]))
 
 (define (sequence->series name seq)
   (define-values (store len)
     (sequence->list/length seq))
-  (series name (make-linear-index len) (list->immutable-vector store)))
+  (make-series name (make-linear-index len) (list->immutable-vector store)))
 
 (define (series-push-index s idx)
   (struct-copy series s [index (index-compose (series-index s) idx)]))
