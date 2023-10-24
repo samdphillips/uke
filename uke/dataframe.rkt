@@ -36,11 +36,15 @@
   (for/list ([a-series (in-list (dataframe-series* a-dataframe))])
     (series-push-index a-series an-index)))
 
-(define (dataframe-series-ref df a-series-name)
+;; get a series out of a dataframe without pushing an index into it
+(define (dataframe-series*-ref df a-series-name)
   (for/first ([a-series (in-list (dataframe-series* df))]
-              #:when (equal? (series-name a-series)
-                             a-series-name))
-    (series-push-index a-series (dataframe-index df))))
+              #:when (equal? (series-name a-series) a-series-name))
+    a-series))
+
+(define (dataframe-series-ref df a-series-name)
+  (series-push-index (dataframe-series*-ref df a-series-name)
+                     (dataframe-index df)))
 
 (define (dataframe-add-series* df . series-to-add)
   (define df-idx (dataframe-index df))
@@ -75,7 +79,8 @@
   (struct-copy dataframe df [index new-index]))
 
 (define (dataframe-cell-ref df a-series-name i)
-  (series-ref (dataframe-series-ref df a-series-name) i))
+  (define j (index-ref (dataframe-index df) i))
+  (series-ref (dataframe-series*-ref df a-series-name) j))
 
 (define-syntax-parse-rule
   (for/dataframe (column-names:id ...) for-clauses body ...)
