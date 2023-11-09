@@ -9,7 +9,7 @@
 
 (provide where)
 
-;; XXX needs to also work with categorical index
+;; XXX use dataframe-select ?
 (define-syntax-parse-rule (where df-expr (binder:id ...) body ...+)
   #:declare df-expr (expr/c #'dataframe?)
   #:with (binder-series ...) (generate-temporaries #'(binder ...))

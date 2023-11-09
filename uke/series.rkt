@@ -18,6 +18,8 @@
          vector->series
          sequence->series)
 
+;; XXX: series metadata
+
 (struct series (name index store)
   #:transparent
   #:property prop:sequence

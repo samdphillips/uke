@@ -6,6 +6,12 @@
          (submod uke/index for-test)
          uke/series)
 
+;; There are 2**3 combinations of arguments for `vector->series`.  The cases are enumerated
+;; +----- default offset / offset
+;; |+---- default size / size
+;; vvv--- mutable/immutable vector
+;; xxx
+
 ;; 000
 (test-case "vector->series mutable w/ defaults"
   (define v (build-vector 10 values))

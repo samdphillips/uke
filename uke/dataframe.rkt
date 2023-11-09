@@ -17,6 +17,8 @@
          dataframe-cell-ref
          for/dataframe)
 
+;; XXX: series-metadata access
+
 (struct dataframe (index series*) #:transparent)
 
 ;; XXX: actually compute a compatible index
