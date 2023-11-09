@@ -3,6 +3,7 @@
 (require racket/sequence
          racket/unsafe/ops
          racket/vector
+         "error.rkt"
          "index.rkt"
          "store.rkt"
          "util.rkt")
@@ -39,8 +40,14 @@
 
 (define (vector->series name vec #:size [size #f] #:offset [offset #f])
   (define series-offset (or offset 0))
-  (define series-size   (or size (- (vector-length vec) series-offset)))
+  (define vlen (vector-length vec))
+  (define series-size   (or size (- vlen series-offset)))
   (cond
+    [(> (+ series-offset series-size) vlen)
+     (raise-uke-error exn:uke:series
+                      'vector->series
+                      "series size ~a at offset ~a is out of bounds for vector length ~a"
+                      series-size series-offset vlen)]
     [(immutable? vec)
      (series name (make-linear-index series-size series-offset) vec)]
     [else

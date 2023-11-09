@@ -2,10 +2,12 @@
 
 (provide (struct-out exn:uke)
          (struct-out exn:uke:index)
+         (struct-out exn:uke:series)
          raise-uke-error)
 
 (struct exn:uke exn:fail ())
 (struct exn:uke:index exn:uke ())
+(struct exn:uke:series exn:uke ())
 
 (define (raise-uke-error make-exn name message . args)
   (define final-message
