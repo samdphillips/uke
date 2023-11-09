@@ -9,22 +9,16 @@
 
 (provide where)
 
-;; XXX use dataframe-select ?
 (define-syntax-parse-rule (where df-expr (binder:id ...) body ...+)
   #:declare df-expr (expr/c #'dataframe?)
   #:with (binder-series ...) (generate-temporaries #'(binder ...))
   (let ()
     (define df df-expr.c)
-    ;; XXX check df for column names
-    (define binder-series (dataframe-series-ref df 'binder)) ...
-    (define (pred? binder ...)
+    ;; XXX check df for series names
+    (define df-index (dataframe-index df))
+    (define binder-series (dataframe-series*-ref df 'binder)) ...
+    (define (pred? i)
+      (define binder (dataframe-cell-ref* df-index binder-series i)) ...
       (define result (let () body ...))
       result)
-    (define new-index
-      (index-compose
-       (dataframe-index df)
-       (make-vector-index
-        (unsafe-vector*->immutable-vector!
-         (for/vector ([i (in-indices (dataframe-index df))]
-                      #:when (pred? (series-ref binder-series i) ...)) i)))))
-    (struct-copy dataframe df [index new-index])))
+    (dataframe-select df pred?)))

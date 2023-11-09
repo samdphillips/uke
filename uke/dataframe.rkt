@@ -10,11 +10,13 @@
          dataframe-num-rows
          dataframe-series
          dataframe-series-ref
+         dataframe-series*-ref
          dataframe-add-series*
          dataframe-remove-series*
          dataframe-reorder-series
          dataframe-select
          dataframe-cell-ref
+         dataframe-cell-ref*
          for/dataframe)
 
 ;; XXX: series-metadata access
@@ -83,6 +85,10 @@
 (define (dataframe-cell-ref df a-series-name i)
   (define j (index-ref (dataframe-index df) i))
   (series-ref (dataframe-series*-ref df a-series-name) j))
+
+;; A more primitive form of dataframe-cell-ref that avoids series lookup
+(define (dataframe-cell-ref* df-index a-series i)
+  (series-ref a-series (index-ref df-index i)))
 
 (define-syntax-parse-rule
   (for/dataframe (column-names:id ...) for-clauses body ...+)
