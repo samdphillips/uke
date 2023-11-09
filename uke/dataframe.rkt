@@ -85,7 +85,7 @@
   (series-ref (dataframe-series*-ref df a-series-name) j))
 
 (define-syntax-parse-rule
-  (for/dataframe (column-names:id ...) for-clauses body ...)
+  (for/dataframe (column-names:id ...) for-clauses body ...+)
   #:with this-syntax this-syntax
   #:do [(define stride (length (syntax-e #'(column-names ...))))]
   #:with (series-v ...) (generate-temporaries #'(column-names ...))
