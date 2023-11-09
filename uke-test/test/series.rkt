@@ -90,3 +90,8 @@
   (check-exn
    exn:uke:series?
    (λ () (vector->series 'a v #:size 10 #:offset 5))))
+
+(test-case "build-series"
+  (define s (build-series 'a 10 values))
+  (check-match (series-index s) (linear-index 10 0 1))
+  (check-equal? (sequence->list s) '(0 1 2 3 4 5 6 7 8 9)))

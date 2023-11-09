@@ -15,6 +15,7 @@
          series-store
          series-ref
          series-push-index
+         build-series
          ->series
          vector->series
          sequence->series)
@@ -67,3 +68,9 @@
   (struct-copy series s [index (index-compose (series-index s) idx)]))
 
 ;; build-series
+(define (build-series name size f)
+  (make-series name
+               (make-linear-index size 0 1)
+               (unsafe-vector*->immutable-vector!
+                (build-vector size f))))
+
