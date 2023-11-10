@@ -129,7 +129,6 @@
                  (make-linear-index 10 0 2)
                  v))
   (define t (series-compact s))
-  (displayln s) (displayln t)
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
