@@ -62,6 +62,9 @@
 (define (index-size idx)
   (apply-index-op idx 1))
 
+;; XXX if i1 == (linear-index sz 0 1) and (index-size i0) == sz return i0
+;; XXX if i1 == (linear-index sz 0 1) and (vector-index? i0) and (index-size i0) != sz
+;;     only copy relevant part of index instead of recalculating the whole table.
 (define (index-compose i0 i1)
   (check-index-sizes-compatible 'index-compose i1 i0)
   (cond
@@ -71,7 +74,8 @@
 (define (index-compact? idx)
   (and (linear-index? idx)
        (zero? (linear-index-offset idx))
-       (<= (linear-index-stride idx) 1)))
+       (let ([s (linear-index-stride idx)])
+         (or (= 1 s) (= 0 s)))))
 
 ;; XXX in-indices should probably work on indexes, series, and dataframes.
 (define in-indices-sequence

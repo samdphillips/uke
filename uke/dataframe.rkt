@@ -7,6 +7,7 @@
          "series.rkt")
 
 (provide (struct-out dataframe)
+         make-dataframe
          dataframe-num-rows
          dataframe-series
          dataframe-series-ref
@@ -14,6 +15,7 @@
          dataframe-add-series*
          dataframe-remove-series*
          dataframe-reorder-series
+         dataframe-reverse-rows
          dataframe-select
          dataframe-cell-ref
          dataframe-cell-ref*
@@ -71,6 +73,10 @@
     (for/list ([name (in-list series-names)])
       (dataframe-series-ref df name)))
   (struct-copy dataframe df [series* series*]))
+
+(define (dataframe-reverse-rows df)
+  (define n (dataframe-num-rows df))
+  (struct-copy dataframe df [index (make-linear-index n (sub1 n) -1)]))
 
 (define (dataframe-select df pred?)
   (define new-index
