@@ -18,13 +18,13 @@
     (define column.vec-id (make-vector n #f)) ...
     (define column.func-id column.func) ...
     ;; XXX check df for column names
-    ;; XXX dataframe-series-ref will allocate a new index
     (define-values (column.series-id ...)
-      (values (dataframe-series-ref df 'column.binder) ...)) ...
+      (values (dataframe-series*-ref df 'column.binder) ...)) ...
     (define dfi (dataframe-index df))
     (for ([i (in-indices dfi)])
       (vector-set! column.vec-id i
-                   (column.func-id (series-ref column.series-id i) ...))
+                   (column.func-id
+                    (dataframe-cell-ref* dfi column.series-id i) ...))
       ...)
     (dataframe-add-series* (dataframe-remove-series* df 'column.name ...)
                            (vector->series 'column.name
