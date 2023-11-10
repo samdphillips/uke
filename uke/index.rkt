@@ -11,6 +11,7 @@
          index-ref
          index-size
          index-compose
+         index-compact?
          in-indices
 
          index-sort
@@ -32,7 +33,6 @@
 ;; index-ref
 ;; index-size
 ;; index-compose
-;; index-compose!
 ;; XXX probably needs property guard
 (define-values (prop:index index? index-ops)
   (make-struct-type-property 'index))
@@ -67,6 +67,11 @@
   (cond
     [(get-index-op i0 2) => (λ (f) (f i0 i1))]
     [else (generic-index-compose i0 i1)]))
+
+(define (index-compact? idx)
+  (and (linear-index? idx)
+       (zero? (linear-index-offset idx))
+       (<= (linear-index-stride idx) 1)))
 
 ;; XXX in-indices should probably work on indexes, series, and dataframes.
 (define in-indices-sequence

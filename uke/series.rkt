@@ -11,10 +11,13 @@
 (provide make-series
          series?
          series-name
+         series-size
          series-index
          series-store
          series-ref
          series-push-index
+         series-compact?
+         series-compact
          build-series
          ->series
          vector->series
@@ -27,6 +30,9 @@
   #:property prop:sequence
   (λ (s) (sequence-map (λ (i) (series-ref s i))
                        (in-indices (series-index s)))))
+
+(define (series-size a-series)
+  (index-size (series-index a-series)))
 
 (define (make-series name index store)
   (series name index store))
@@ -67,7 +73,20 @@
 (define (series-push-index s idx)
   (struct-copy series s [index (index-compose (series-index s) idx)]))
 
-;; build-series
+(define (series-compact? a-series)
+  (define idx (series-index a-series))
+  (and (index-compact? idx)
+       (= (store-length (series-store a-series))
+          (index-size idx))))
+
+(define (series-compact a-series)
+  (cond
+    [(series-compact? a-series) a-series]
+    [else
+     (build-series (series-name a-series)
+                   (series-size a-series)
+                   (λ (i) (series-ref a-series i)))]))
+
 (define (build-series name size f)
   (make-series name
                (make-linear-index size 0 1)
