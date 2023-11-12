@@ -19,19 +19,19 @@
   (check-exn exn:uke:index? (lambda () (index-ref idx 10)))
   (check-exn exn:uke:index? (lambda () (index-ref idx 100))))
 
-(test-case "identity/identity same index-compose"
+(test-case "linear/linear same index-compose"
   (define i (make-linear-index 10))
   (define j (index-compose i i))
   (check-equal? (index-size j) 10))
 
-(test-case "identity/identity smaller index-compose"
+(test-case "linear/linear smaller index-compose"
   (define i (make-linear-index 10))
   (define j (make-linear-index 20))
   (define k (index-compose j i))
   (check-equal? (index-size k) 10)
   (check-exn exn:uke:index? (lambda () (index-compose i j))))
 
-(test-case "identity/identity index-compose"
+(test-case "linear/linear index-compose"
   (define i (make-linear-index 10 0 2))
   (define j (make-linear-index 10))
   (define k (index-compose i j))
@@ -82,7 +82,7 @@
   (check-equal? ii j)
   (check-equal? jj j))
 
-(test-case "identity/vector index compose"
+(test-case "linear/vector index compose"
   (define i (make-linear-index 3))
   (define j (make-vector-index (vector 2 1 0)))
 
@@ -99,7 +99,7 @@
                   (index-ref ji t))
                 '(2 1 0)))
 
-(test-case "identity/vector smaller index compose"
+(test-case "linear/vector smaller index compose"
   (define i (make-linear-index 3))
   (define j (make-vector-index (vector 3 2 1 0)))
   (define ji (index-compose j i))
