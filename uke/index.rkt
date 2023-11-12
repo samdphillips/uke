@@ -103,14 +103,22 @@
     (sort (sequence->list (in-indices-sequence idx)) lt?))))
 
 (define (do-generic-index-compose i0 i1)
-  (for/vector #:length (index-size i1) ([i (in-indices i1)])
-    (index-ref i0 (index-ref i1 i))))
+  (define vec (make-vector (index-size i1)))
+  (for/fold ([max-range -1] #:result (values max-range vec))
+            ([i (in-indices i1)])
+    (define v (index-ref i0 (index-ref i1 i)))
+    (vector-set! vec i v)
+    (max max-range v)))
 
 (define (generic-index-compose i0 i1)
+  ;; XXX: small indexes (size 0-2) could trivially be converted to
+  ;;     linear-indexes, but this optimization probably wouldn't occur much in
+  ;;     practice.
   ;; do-generic-index-compose must return a fresh vector
-  (make-vector-index
-   (unsafe-vector*->immutable-vector!
-     (do-generic-index-compose i0 i1))))
+  (define-values (max-range vec)
+    (do-generic-index-compose i0 i1))
+  (vector-index max-range
+                (unsafe-vector*->immutable-vector! vec)))
 
 (define (linear-index-ref idx i)
   (check-index-bounds 'index-ref idx i)

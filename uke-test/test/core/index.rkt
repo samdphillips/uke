@@ -73,9 +73,11 @@
 
   (define ii (index-compose i i))
   (check-true (vector-index? ii))
+  (check-equal? (index-max-range ii) 3)
 
   (define jj (index-compose j j))
   (check-true (vector-index? jj))
+  (check-equal? (index-max-range jj) 3)
 
   (check-not-eq? ii jj)
 
@@ -89,12 +91,14 @@
   (define ij (index-compose i j))
   (check-true (vector-index? ij))
   (check-equal? (index-size ij) 3)
+  (check-equal? (index-max-range ij) 2)
   (check-equal? (for/list ([t (in-indices ij)])
                   (index-ref ij t))
                 '(2 1 0))
 
   (define ji (index-compose j i))
   (check-equal? (index-size ji) 3)
+  (check-equal? (index-max-range ji) 2)
   (check-equal? (for/list ([t (in-indices ji)])
                   (index-ref ji t))
                 '(2 1 0)))
@@ -105,6 +109,7 @@
   (define ji (index-compose j i))
   (check-true (vector-index? ji))
   (check-equal? (index-size ji) 3)
+  (check-equal? (index-max-range ji) 3)
   (check-equal? (for/list ([t (in-indices ji)])
                   (index-ref ji t))
                 '(3 2 1))
