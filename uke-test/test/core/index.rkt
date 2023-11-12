@@ -37,10 +37,23 @@
   (define k (index-compose i j))
   (check-match k (linear-index 10 0 2)))
 
-;; XXX: this should fail, range of i1 is greater than the domain of i0
-;; (index-compose (make-linear-index 10) (make-linear-index 10 0 2))
+(test-case "linear-index max-range"
+  (check-equal? (index-max-range (make-linear-index 10)) 10)
+  (check-equal? (index-max-range (make-linear-index 9 1)) 10)
+  (check-equal? (index-max-range (make-linear-index 5 0 2)) 10)
+  (check-equal? (index-max-range (make-linear-index 3 4 2)) 10)
+  (check-equal? (index-max-range (make-linear-index 0)) -1)
+  (check-equal? (index-max-range (make-linear-index 0 1 1)) -1))
 
-(check-equal? (index-size (make-vector-index #())) 0)
+(test-case "linear/linear incompatible compose"
+  (check-exn exn:uke:index?
+             (λ () (index-compose (make-linear-index 10) (make-linear-index 10 0 2))))
+  (check-exn exn:uke:index?
+             (λ () (index-compose (make-linear-index 10) (make-linear-index 10 1 1)))))
+
+(test-case "vector-index empty"
+  (check-equal? (index-size (make-vector-index #())) 0)
+  (check-equal? (index-max-range (make-vector-index #())) -1))
 
 (test-case "vector-index"
   (define idx (make-vector-index (vector-immutable 3 2 1 0)))
@@ -50,6 +63,7 @@
   (check-equal? (index-ref idx 1) 2)
   (check-equal? (index-ref idx 2) 1)
   (check-equal? (index-ref idx 3) 0)
+  (check-equal? (index-max-range idx) 3)
   (check-exn exn:uke:index? (lambda () (index-ref idx -1)))
   (check-exn exn:uke:index? (lambda () (index-ref idx 4))))
 

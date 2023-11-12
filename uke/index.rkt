@@ -4,6 +4,7 @@
                      syntax/parse)
          racket/sequence
          racket/unsafe/ops
+         racket/vector
          "error.rkt")
 
 (provide prop:index
@@ -11,6 +12,7 @@
          index-ref
          index-size
          index-compose
+         index-max-range
          index-compact?
          in-indices
 
@@ -33,7 +35,7 @@
 ;; index-ref
 ;; index-size
 ;; index-compose
-;; XXX probably needs property guard
+;; XXX eventually need a property guard if this is exported
 (define-values (prop:index index? index-ops)
   (make-struct-type-property 'index))
 
@@ -47,12 +49,12 @@
   (unless (and (<= 0 i) (< i (index-size idx)))
     (raise-uke-error exn:uke:index who "index out of range for index: ~a" i)))
 
-(define (check-index-sizes-compatible who i0 i1)
-  (unless (<= (index-size i0) (index-size i1))
+(define (check-index-compatible who i0 i1)
+  (unless (<= (index-max-range i0) (index-size i1))
     (raise-uke-error exn:uke:index
                      who
-                     "index sizes incompatible: ~a > ~a"
-                     (index-size i0)
+                     "indexes incompatible: range ~a > size ~a"
+                     (index-max-range i0)
                      (index-size i1))))
 
 (define (index-ref idx i)
@@ -66,10 +68,15 @@
 ;; XXX if i1 == (linear-index sz 0 1) and (vector-index? i0) and (index-size i0) != sz
 ;;     only copy relevant part of index instead of recalculating the whole table.
 (define (index-compose i0 i1)
-  (check-index-sizes-compatible 'index-compose i1 i0)
+  (check-index-compatible 'index-compose i1 i0)
   (cond
     [(get-index-op i0 2) => (λ (f) (f i0 i1))]
     [else (generic-index-compose i0 i1)]))
+
+(define (index-max-range idx)
+  (if (zero? (index-size idx))
+      -1
+      (apply-index-op idx 3)))
 
 (define (index-compact? idx)
   (and (linear-index? idx)
@@ -127,12 +134,17 @@
       (λ () (do-linear-index-compose i0 i1))
       make-linear-index)]))
 
+(define (linear-index-max-range idx)
+  (+ (linear-index-offset idx)
+     (* (linear-index-stride idx) (linear-index-size idx))))
+
 (struct linear-index (size offset stride)
   #:transparent
   #:property prop:index
   (vector linear-index-ref
           (λ (idx) (linear-index-size idx))
-          linear-index-compose))
+          linear-index-compose
+          linear-index-max-range))
 
 (define (make-linear-index size [offset 0] [stride 1])
   (linear-index size offset stride))
@@ -144,12 +156,19 @@
 (define (vector-index-size idx)
   (vector-length (vector-index-mapping idx)))
 
-(struct vector-index (mapping)
+(define (-vector-index-max-range idx)
+  (vector-index-max-range idx))
+
+(struct vector-index (max-range mapping)
   #:transparent
   #:property prop:index
   (vector vector-index-ref
           vector-index-size
-          #f))
+          #f
+          -vector-index-max-range))
 
 (define (make-vector-index vec)
-  (vector-index (vector->immutable-vector vec)))
+  (vector-index (if (zero? (vector-length vec))
+                    -1
+                    (vector-argmax values vec))
+                (vector->immutable-vector vec)))
