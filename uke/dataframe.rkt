@@ -79,12 +79,8 @@
       (dataframe-series-ref df name)))
   (struct-copy dataframe df [series* series*]))
 
-;; XXX: broken for vector-index
 (define (dataframe-reverse-rows df)
-  (define (update idx)
-    (define n (index-size idx))
-    (make-linear-index n (sub1 n) -1))
-  (dataframe-index-update df update))
+  (dataframe-index-update df index-reverse))
 
 (define (dataframe-select df pred?)
   (define (select idx0)

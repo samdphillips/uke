@@ -16,6 +16,7 @@
          index-compact?
          in-indices
 
+         index-reverse
          index-sort
 
          exn:uke:index?
@@ -96,6 +97,10 @@
   (syntax-parser
     [(v:id (in-indices an-index)) #'(v (in-range (index-size an-index)))]
     [_ #f]))
+
+(define (index-reverse idx)
+  (define n (index-size idx))
+  (index-compose idx (make-linear-index n (sub1 n) -1)))
 
 (define (index-sort idx lt?)
   (make-vector-index
