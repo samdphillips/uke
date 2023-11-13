@@ -9,6 +9,7 @@
 (provide (struct-out dataframe)
          make-dataframe
          dataframe-num-rows
+         dataframe-index-update
          dataframe-series
          dataframe-series-ref
          dataframe-series*-ref
@@ -34,6 +35,9 @@
                         #:index [an-index (compatible-index a-series-list)])
   (dataframe an-index a-series-list))
 
+(define (dataframe-index-update df f)
+  (struct-copy dataframe df (index (f [dataframe-index df]))))
+
 (define (dataframe-num-rows df)
   (index-size (dataframe-index df)))
 
@@ -57,6 +61,7 @@
   (define series*
     (for/list ([a-series (in-list (dataframe-series* df))])
       (series-push-index a-series df-idx)))
+  ;; XXX: this can just be make-dataframe
   (struct-copy dataframe df
                [index   (make-linear-index (index-size df-idx))]
                [series* (append series* series-to-add)]))
@@ -74,19 +79,21 @@
       (dataframe-series-ref df name)))
   (struct-copy dataframe df [series* series*]))
 
+;; XXX: broken for vector-index
 (define (dataframe-reverse-rows df)
-  (define n (dataframe-num-rows df))
-  (struct-copy dataframe df [index (make-linear-index n (sub1 n) -1)]))
+  (define (update idx)
+    (define n (index-size idx))
+    (make-linear-index n (sub1 n) -1))
+  (dataframe-index-update df update))
 
 (define (dataframe-select df pred?)
-  (define new-index
-    (index-compose
-     (dataframe-index df)
-     (make-vector-index
-      (unsafe-vector*->immutable-vector!
-       (for/vector ([i (in-indices (dataframe-index df))]
-                    #:when (pred? i)) i)))))
-  (struct-copy dataframe df [index new-index]))
+  (define (select idx0)
+    (define idx1
+      (make-vector-index
+       (unsafe-vector*->immutable-vector!
+        (for/vector ([i (in-indices idx0)] #:when (pred? i)) i))))
+    (index-compose idx0 idx1))
+  (dataframe-index-update df select))
 
 (define (dataframe-cell-ref df a-series-name i)
   (define j (index-ref (dataframe-index df) i))
