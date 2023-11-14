@@ -17,6 +17,8 @@
          dataframe-remove-series*
          dataframe-reorder-series
          dataframe-reverse-rows
+         dataframe-compact?
+         dataframe-compact
          dataframe-select
          dataframe-cell-ref
          dataframe-cell-ref*
@@ -81,6 +83,20 @@
 
 (define (dataframe-reverse-rows df)
   (dataframe-index-update df index-reverse))
+
+(define (dataframe-compact? df)
+  (and (index-compact? (dataframe-index df))
+       (for/and ([s (in-list (dataframe-series* df))])
+         (series-compact? s))))
+
+(define (dataframe-compact df)
+  (cond
+    [(dataframe-compact? df) df]
+    [else
+     (make-dataframe
+      ;; XXX: dataframe-series allocates series and index
+      (for/list ([s (in-list (dataframe-series df))])
+        (series-compact s)))]))
 
 (define (dataframe-select df pred?)
   (define (select idx0)
