@@ -79,13 +79,13 @@
   (check-match (series-index s) (linear-index 5 2 1))
   (check-equal? (sequence->list s) '(2 3 4 5 6)))
 
-(test-case "size out of bounds with default offset"
+(test-case "vector->series size out of bounds with default offset"
   (define v (vector))
   (check-exn
    exn:uke:series?
    (λ () (vector->series 'a v #:size 20))))
 
-(test-case "size out of bounds with offset"
+(test-case "vector->series size out of bounds with offset"
   (define v (build-vector 10 values))
   (check-exn
    exn:uke:series?
