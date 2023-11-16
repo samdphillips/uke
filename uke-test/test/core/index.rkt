@@ -114,3 +114,72 @@
                   (index-ref ji t))
                 '(3 2 1))
   (check-exn exn:uke:index? (lambda () (index-compose i j))))
+
+(test-case "index-select"
+  (define i0 (make-linear-index 100))
+  (define i1 (index-select i0 (λ (i) (<= 10 i 19))))
+  (check-equal? (index-size i1) 10)
+  (define i2 (index-select i1 even?))
+  (check-equal? (index-size i2) 5)
+  (check-equal? (for/list ([i (in-indices i2)])
+                  (index-ref i2 i))
+                '(10 12 14 16 18)))
+
+(test-case "index-slice linear"
+  (define i (make-linear-index 100))
+  (define s0 (index-slice i 0 10))
+  (check-true (linear-index? s0))
+  (check-equal? (index-size s0) 10)
+  (check-equal? (index-ref s0 0) 0)
+  (check-equal? (index-ref s0 9) 9)
+
+  (define s1 (index-slice i 90 10))
+  (check-true (linear-index? s1))
+  (check-equal? (index-size s1) 10)
+  (check-equal? (index-ref s1 0) 90)
+  (check-equal? (index-ref s1 9) 99)
+
+  (define s2 (index-slice i 90))
+  (check-true (linear-index? s2))
+  (check-equal? (index-size s2) 10)
+  (check-equal? (index-ref s2 0) 90)
+  (check-equal? (index-ref s2 9) 99)
+
+  (define s3 (index-slice i 10 10))
+  (check-true (linear-index? s3))
+  (check-equal? (index-size s3) 10)
+  (check-equal? (index-ref s3 0) 10)
+  (check-equal? (index-ref s3 9) 19))
+
+(test-case "index-slice vector"
+  (define i (index-select (make-linear-index 100) even?))
+  (define s0 (index-slice i 0 10))
+  (check-true (vector-index? s0))
+  (check-equal? (index-size s0) 10)
+  (check-equal? (index-ref s0 0) 0)
+  (check-equal? (index-ref s0 9) 18)
+
+  (define s1 (index-slice i 40 10))
+  (check-true (vector-index? s1))
+  (check-equal? (index-size s1) 10)
+  (check-equal? (index-ref s1 0) 80)
+  (check-equal? (index-ref s1 9) 98)
+
+  (define s2 (index-slice i 40))
+  (check-true (vector-index? s2))
+  (check-equal? (index-size s2) 10)
+  (check-equal? (index-ref s2 0) 80)
+  (check-equal? (index-ref s2 9) 98)
+
+  (define s3 (index-slice i 10 10))
+  (check-true (vector-index? s3))
+  (check-equal? (index-size s3) 10)
+  (check-equal? (index-ref s3 0) 20)
+  (check-equal? (index-ref s3 9) 38))
+
+(test-case "index-pick"
+  (define i0 (make-linear-index 100))
+  (define i1 (index-pick i0 '(0 5 25 55 75)))
+  (check-equal? (index-size i1) 5)
+  (check-equal? (for/list ([i (in-indices i1)]) (index-ref i1 i))
+                '(0 5 25 55 75)))

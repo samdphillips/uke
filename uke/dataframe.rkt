@@ -20,6 +20,7 @@
          dataframe-compact?
          dataframe-compact
          dataframe-select
+         dataframe-slice
          dataframe-cell-ref
          dataframe-cell-ref*
          for/dataframe)
@@ -100,12 +101,12 @@
 
 (define (dataframe-select df pred?)
   (define (select idx0)
-    (define idx1
-      (make-vector-index
-       (unsafe-vector*->immutable-vector!
-        (for/vector ([i (in-indices idx0)] #:when (pred? i)) i))))
+    (define idx1 (index-select idx0 pred?))
     (index-compose idx0 idx1))
   (dataframe-index-update df select))
+
+(define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
+  (dataframe-index-update df (λ (idx) (index-slice idx start size))))
 
 (define (dataframe-cell-ref df a-series-name i)
   (define j (index-ref (dataframe-index df) i))

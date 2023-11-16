@@ -18,6 +18,7 @@
          series-push-index
          series-compact?
          series-compact
+         series-slice
          build-series
          ->series
          vector->series
@@ -30,6 +31,9 @@
   #:property prop:sequence
   (λ (s) (sequence-map (λ (i) (series-ref s i))
                        (in-indices (series-index s)))))
+
+(define (series-index-update a-series f)
+  (struct-copy series a-series (index (f [series-index a-series]))))
 
 (define (series-size a-series)
   (index-size (series-index a-series)))
@@ -87,9 +91,11 @@
                    (series-size a-series)
                    (λ (i) (series-ref a-series i)))]))
 
+(define (series-slice a-series start [size (- (series-size a-series) start)])
+  (series-index-update a-series (λ (idx) (index-slice idx start size))))
+
 (define (build-series name size f)
   (make-series name
                (make-linear-index size 0 1)
                (unsafe-vector*->immutable-vector!
                 (build-vector size f))))
-

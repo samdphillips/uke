@@ -16,6 +16,10 @@
          index-compact?
          in-indices
 
+         index-pick
+         index-select
+         index-extract
+         index-slice
          index-reverse
          index-sort
 
@@ -86,17 +90,37 @@
          (or (= 1 s) (= 0 s)))))
 
 ;; XXX in-indices should probably work on indexes, series, and dataframes.
+;; XXX this name is bad
 (define in-indices-sequence
   (procedure-rename
    (λ (idx)
      (in-range (index-size idx)))
    'in-indices))
 
+;; XXX this name is bad
 (define-sequence-syntax in-indices
   (λ () #'in-indices-sequence)
   (syntax-parser
     [(v:id (in-indices an-index)) #'(v (in-range (index-size an-index)))]
     [_ #f]))
+
+(define (index-pick idx i*)
+  (index-extract idx #:indices (sort i* <)))
+
+(define (index-select idx pred?)
+  (index-extract idx #:select pred?))
+
+(define (index-extract idx
+                       #:indices [i* (in-indices idx)]
+                       #:select [pred? (λ (i) #t)]
+                       #:transform [xform values])
+  (make-vector-index
+   (unsafe-vector*->immutable-vector!
+    (for/vector ([i i*] #:when (pred? i))
+      (xform (index-ref idx i))))))
+
+(define (index-slice i start [size (- (index-size i) start)])
+  (index-compose i (make-linear-index size start)))
 
 (define (index-reverse idx)
   (define n (index-size idx))

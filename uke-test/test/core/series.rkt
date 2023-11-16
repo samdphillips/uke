@@ -160,3 +160,12 @@
   (check-not-eq? s t)
   (check-equal? (sequence->list s)
                 (sequence->list t)))
+
+(test-case "series-slice"
+  (define s (build-series 'a 100 values))
+  (check-equal? (sequence->list (series-slice s 0 10))
+                '(0 1 2 3 4 5 6 7 8 9))
+  (check-equal? (sequence->list (series-slice s 90 10))
+                '(90 91 92 93 94 95 96 97 98 99))
+  (check-equal? (sequence->list (series-slice s 90))
+                '(90 91 92 93 94 95 96 97 98 99)))
