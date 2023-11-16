@@ -13,6 +13,7 @@
          dataframe-series
          dataframe-series-ref
          dataframe-series*-ref
+         dataframe-series-lift
          dataframe-add-series*
          dataframe-remove-series*
          dataframe-reorder-series
@@ -21,6 +22,7 @@
          dataframe-compact
          dataframe-select
          dataframe-slice
+         dataframe-group
          dataframe-cell-ref
          dataframe-cell-ref*
          for/dataframe)
@@ -58,6 +60,15 @@
 (define (dataframe-series-ref df a-series-name)
   (series-push-index (dataframe-series*-ref df a-series-name)
                      (dataframe-index df)))
+
+(define (dataframe-series-lift df series-names f)
+  (define idx (dataframe-index df))
+  (define refs
+    (for/list ([n (in-list series-names)])
+      (define s (dataframe-series*-ref df n))
+      (λ (i) (dataframe-cell-ref* idx s i))))
+  (λ (i)
+    (apply f (for/list ([ref (in-list refs)]) (ref i)))))
 
 (define (dataframe-add-series* df . series-to-add)
   (define df-idx (dataframe-index df))
@@ -107,6 +118,15 @@
 
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
   (dataframe-index-update df (λ (idx) (index-slice idx start size))))
+
+(define (dataframe-group df key-func [aggr-func values])
+  (define ((add-index i) v) (cons i v))
+    (define groups
+      (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
+        (hash-update groups (key-func i) (add-index i) null)))
+    (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
+      (define group-df (dataframe-index-update df (λ (idx) (index-pick idx g))))
+      (values k (aggr-func group-df))))
 
 (define (dataframe-cell-ref df a-series-name i)
   (define j (index-ref (dataframe-index df) i))

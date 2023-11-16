@@ -4,7 +4,7 @@
          (prefix-in s: uke/sawzall)
          qi)
 
-(provide (for-space qi create slice where)
+(provide (for-space qi create group-with slice where)
          (rename-out [s:show show]))
 
 (begin-for-syntax
@@ -18,6 +18,9 @@
                     (column.binder ...)
                     (~> (column.binder ...) column.flow)]
                    ...))))
+
+(define-qi-syntax-rule (group-with series-name:id ...)
+  (esc (λ (df) (s:group-with df series-name ...))))
 
 (define-qi-syntax-rule (slice s)
   (esc (λ (df) (s:slice df s))))
