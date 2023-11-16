@@ -29,4 +29,6 @@
     (dataframe-add-series* (dataframe-remove-series* df 'column.name ...)
                            (vector->series 'column.name
                                            (unsafe-vector*->immutable-vector!
-                                            column.vec-id)) ...)))
+                                            column.vec-id)
+                                           #:properties
+                                           (hash {~@ 'column.property column.property-expr} ...)) ...)))

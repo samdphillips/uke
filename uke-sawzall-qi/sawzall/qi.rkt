@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require (for-syntax syntax/parse)
+(require (for-syntax racket/base
+                     syntax/parse)
          (prefix-in s: uke/sawzall)
          qi)
 
@@ -9,12 +10,13 @@
 
 (begin-for-syntax
   (define-syntax-class create-column-spec
-    (pattern [name:id (binder:id ...) flow])))
+    (pattern [name:id {~seq property:keyword property-flow} ... (binder:id ...) flow])))
 
 (define-qi-syntax-rule (create column:create-column-spec ...)
   (esc (λ (df)
          (s:create df
                    [column.name
+                    {~@ column.property (flow column.property-flow)} ...
                     (column.binder ...)
                     (~> (column.binder ...) column.flow)]
                    ...))))

@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/sequence
+(require racket/format
+         racket/sequence
          racket/unsafe/ops
          racket/vector
          "error.rkt"
@@ -19,14 +20,13 @@
          series-compact?
          series-compact
          series-slice
+         series-render-cell
          build-series
          ->series
          vector->series
          sequence->series)
 
-;; XXX: series metadata
-
-(struct series (name index store)
+(struct series (name properties index store)
   #:transparent
   #:property prop:sequence
   (λ (s) (sequence-map (λ (i) (series-ref s i))
@@ -38,18 +38,21 @@
 (define (series-size a-series)
   (index-size (series-index a-series)))
 
-(define (make-series name index store)
-  (series name index store))
+(define (make-series name index store #:properties [properties (hash)])
+  (series name properties index store))
 
 (define (series-ref a-series i)
   (store-ref (series-store a-series) (index-ref (series-index a-series) i)))
 
-(define (->series name seq)
+(define (series-property-ref a-series property [default #f])
+  (hash-ref (series-properties a-series) property (λ () default)))
+
+(define (->series name seq #:properties [properties (hash)])
   (cond
-    [(vector? seq) (vector->series name seq)]
+    [(vector? seq) (vector->series name seq #:properties properties)]
     [else (sequence->series name seq)]))
 
-(define (vector->series name vec #:size [size #f] #:offset [offset #f])
+(define (vector->series name vec #:size [size #f] #:offset [offset #f] #:properties [properties (hash)])
   (define series-offset (or offset 0))
   (define vlen (vector-length vec))
   (define series-size   (or size (- vlen series-offset)))
@@ -60,19 +63,23 @@
                       "series size ~a at offset ~a is out of bounds for vector length ~a"
                       series-size series-offset vlen)]
     [(immutable? vec)
-     (series name (make-linear-index series-size series-offset) vec)]
+     (make-series name
+                  (make-linear-index series-size series-offset)
+                  vec
+                  #:properties properties)]
     [else
      (define i series-offset)
      (define j (+ series-offset series-size))
      (make-series name
                   (make-linear-index series-size 0 1)
                   (unsafe-vector*->immutable-vector!
-                   (vector-copy vec i j)))]))
+                   (vector-copy vec i j))
+                  #:properties properties)]))
 
-(define (sequence->series name seq)
+(define (sequence->series name seq #:properties [properties (hash)])
   (define-values (store len)
     (sequence->list/length seq))
-  (make-series name (make-linear-index len) (list->immutable-vector store)))
+  (make-series name (make-linear-index len) (list->immutable-vector store) #:properties properties))
 
 (define (series-push-index s idx)
   (struct-copy series s [index (index-compose (series-index s) idx)]))
@@ -93,6 +100,10 @@
 
 (define (series-slice a-series start [size (- (series-size a-series) start)])
   (series-index-update a-series (λ (idx) (index-slice idx start size))))
+
+(define (series-render-cell a-series v)
+  (define fmt (series-property-ref a-series '#:render ~a))
+  (fmt v))
 
 (define (build-series name size f)
   (make-series name
