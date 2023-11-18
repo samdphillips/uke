@@ -70,8 +70,10 @@
   (apply-index-op idx 1))
 
 ;; XXX if i1 == (linear-index sz 0 1) and (index-size i0) == sz return i0
-;; XXX if i1 == (linear-index sz 0 1) and (vector-index? i0) and (index-size i0) != sz
-;;     only copy relevant part of index instead of recalculating the whole table.
+;; XXX if i1 == (linear-index sz 0 1) and
+;;        (vector-index? i0) and
+;;        (index-size i0) != sz
+;;     only copy relevant part of index instead of recalculating the table.
 (define (index-compose i0 i1)
   (check-index-compatible 'index-compose i1 i0)
   (cond

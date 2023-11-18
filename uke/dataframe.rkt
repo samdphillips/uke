@@ -125,7 +125,8 @@
       (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
         (hash-update groups (key-func i) (add-index i) null)))
     (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
-      (define group-df (dataframe-index-update df (λ (idx) (index-pick idx g))))
+      (define group-df
+        (dataframe-index-update df (λ (idx) (index-pick idx g))))
       (values k (aggr-func group-df))))
 
 (define (dataframe-cell-ref df a-series-name i)

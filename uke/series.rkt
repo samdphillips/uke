@@ -52,16 +52,21 @@
     [(vector? seq) (vector->series name seq #:properties properties)]
     [else (sequence->series name seq)]))
 
-(define (vector->series name vec #:size [size #f] #:offset [offset #f] #:properties [properties (hash)])
+(define (vector->series name
+                        vec
+                        #:size [size #f]
+                        #:offset [offset #f]
+                        #:properties [properties (hash)])
   (define series-offset (or offset 0))
   (define vlen (vector-length vec))
   (define series-size   (or size (- vlen series-offset)))
   (cond
     [(> (+ series-offset series-size) vlen)
-     (raise-uke-error exn:uke:series
-                      'vector->series
-                      "series size ~a at offset ~a is out of bounds for vector length ~a"
-                      series-size series-offset vlen)]
+     (raise-uke-error
+      exn:uke:series
+      'vector->series
+      "series size ~a at offset ~a is out of bounds for vector length ~a"
+      series-size series-offset vlen)]
     [(immutable? vec)
      (make-series name
                   (make-linear-index series-size series-offset)
@@ -79,7 +84,10 @@
 (define (sequence->series name seq #:properties [properties (hash)])
   (define-values (store len)
     (sequence->list/length seq))
-  (make-series name (make-linear-index len) (list->immutable-vector store) #:properties properties))
+  (make-series name
+               (make-linear-index len)
+               (list->immutable-vector store)
+               #:properties properties))
 
 (define (series-push-index s idx)
   (struct-copy series s [index (index-compose (series-index s) idx)]))
