@@ -16,6 +16,7 @@
          series-index
          series-store
          series-ref
+         series-property-ref
          series-push-index
          series-compact?
          series-compact
