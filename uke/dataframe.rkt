@@ -146,27 +146,27 @@
   #:with stride #`'#,stride
   (let ()
     (define init-rows 16)
-    (define s (make-vector (* init-rows stride)))
-    (define (build size)
+    (define (build store size)
       (define series-v
-        (make-series 'column-names (make-linear-index size ks stride) s))
+        (make-series 'column-names (make-linear-index size ks stride) store))
       ...
       (dataframe (make-linear-index size) (list series-v ...)))
     (for/fold/derived this-syntax
-      ([i 0] [j 0] [k (sub1 init-rows)] #:result (build j))
+      ([s (make-vector (* init-rows stride))]
+       [i 0] [j 0] [k (sub1 init-rows)]
+       #:result (build s j))
       for-clauses
       (call-with-values
        (λ () body ...)
        (λ (column-names ...)
          (vector-set! s (+ i ks) column-names)
          ...
-         (define (next k) (values (+ i stride) (add1 j) (sub1 k)))
+         (define (next s k) (values s (+ i stride) (add1 j) (sub1 k)))
          (cond
            [(zero? k)
             (define k (ceiling (* 1/2 (add1 j))))
             (define next-s (make-vector (* (+ k j 1) stride)))
             (vector-copy! next-s 0 s)
-            (set! s next-s)
-            (next k)]
+            (next next-s k)]
            [else
-            (next k)]))))))
+            (next s k)]))))))
