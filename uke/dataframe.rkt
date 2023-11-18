@@ -63,6 +63,7 @@
 
 (define (dataframe-series-lift df series-names f)
   (define idx (dataframe-index df))
+  ;; XXX check series names
   (define refs
     (for/list ([n (in-list series-names)])
       (define s (dataframe-series*-ref df n))
