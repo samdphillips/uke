@@ -112,8 +112,7 @@
 
 (define (dataframe-select df pred?)
   (define (select idx0)
-    (define idx1 (index-select idx0 pred?))
-    (index-compose idx0 idx1))
+    (index-select idx0 pred?))
   (dataframe-index-update df select))
 
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])

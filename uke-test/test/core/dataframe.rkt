@@ -3,7 +3,8 @@
 (require racket/sequence
          rackunit
          uke/dataframe
-         uke/series)
+         uke/series
+         uke/test/b2t2-tables)
 
 (test-case "dataframe-reverse-rows linear-index"
   (define df (for/dataframe (a) ([i 10]) i))
@@ -54,3 +55,23 @@
                 '(90 91 92 93 94 95 96 97 98 99))
   (check-equal? (sequence->list (dataframe-series-ref df2 'b))
                 '(180 182 184 186 188 190 192 194 196 198)))
+
+(test-case "dataframe-select"
+  (define students2
+    (dataframe-select students
+                      (dataframe-series-lift students
+                                             '(age)
+                                             (λ (age)
+                                               (and (< 12 age) (< age 20))))))
+  (check-equal? (sequence->list (dataframe-series-ref students2 'name))
+                '("Alice" "Eve")))
+
+(test-case "dataframe-select - reversed"
+  (define students2
+    (let ([df (dataframe-reverse-rows students)])
+      (dataframe-select df
+                        (dataframe-series-lift
+                         df '(age) (λ (age)
+                                     (and (< 12 age) (< age 20)))))))
+  (check-equal? (sequence->list (dataframe-series-ref students2 'name))
+                '("Eve" "Alice")))
