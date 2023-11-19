@@ -61,7 +61,7 @@
   (series-push-index (dataframe-series*-ref df a-series-name)
                      (dataframe-index df)))
 
-(define (dataframe-series-lift df series-names f)
+(define (~dataframe-series-lift df series-names f)
   (define idx (dataframe-index df))
   ;; XXX check series names
   (define refs
@@ -70,6 +70,21 @@
       (λ (i) (dataframe-cell-ref* idx s i))))
   (λ (i)
     (apply f (for/list ([ref (in-list refs)]) (ref i)))))
+
+(define-syntax dataframe-series-lift
+  (syntax-parser
+    [(_ df-expr '(series-names:id ...) proc)
+     #:declare df-expr (expr/c #'dataframe?)
+     #:with (a-series ...) (generate-temporaries #'(series-names ...))
+     #'(let ()
+         (define df df-expr.c)
+         (define idx (dataframe-index df))
+         (define a-series (dataframe-series*-ref df 'series-names))
+         ...
+         (λ (i)
+           (proc (dataframe-cell-ref* idx a-series i) ...)))]
+    [_:id #'~dataframe-series-lift]
+    [(_ . rest) #'(~dataframe-series-lift . rest)]))
 
 (define (dataframe-add-series* df . series-to-add)
   (define df-idx (dataframe-index df))

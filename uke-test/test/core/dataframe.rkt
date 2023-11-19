@@ -77,14 +77,14 @@
   (check-equal? (sequence->list (dataframe-series-ref students2 'name))
                 '("Eve" "Alice")))
 
-(test-case "dataframe-series-lift - linear"
+(test-case "dataframe-series-lift - linear - macro"
   (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
   (define f (dataframe-series-lift df0 '(a b) list))
   (define tbl
     (for/list ([i (in-indices (dataframe-index df0))]) (f i)))
   (check-equal? tbl '((0 0) (1 2) (2 4))))
 
-(test-case "dataframe-series-lift - linear reversed"
+(test-case "dataframe-series-lift - linear reversed - macro"
   (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
   (define df1 (dataframe-reverse-rows df0))
   (define f (dataframe-series-lift df1 '(a b) list))
@@ -92,3 +92,19 @@
     (for/list ([i (in-indices (dataframe-index df1))]) (f i)))
   (check-equal? tbl '((2 4) (1 2) (0 0))))
 
+(test-case "dataframe-series-lift - linear - procedural"
+  (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
+  (define cols '(a b))
+  (define f (dataframe-series-lift df0 cols list))
+  (define tbl
+    (for/list ([i (in-indices (dataframe-index df0))]) (f i)))
+  (check-equal? tbl '((0 0) (1 2) (2 4))))
+
+(test-case "dataframe-series-lift - linear reversed  - procedural"
+  (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
+  (define df1 (dataframe-reverse-rows df0))
+  (define cols '(a b))
+  (define f (dataframe-series-lift df1 cols list))
+  (define tbl
+    (for/list ([i (in-indices (dataframe-index df1))]) (f i)))
+  (check-equal? tbl '((2 4) (1 2) (0 0))))
