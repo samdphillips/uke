@@ -47,9 +47,11 @@
 
 (test-case "linear/linear incompatible compose"
   (check-exn exn:uke:index?
-             (λ () (index-compose (make-linear-index 10) (make-linear-index 10 0 2))))
+             (λ () (index-compose (make-linear-index 10)
+                                  (make-linear-index 10 0 2))))
   (check-exn exn:uke:index?
-             (λ () (index-compose (make-linear-index 10) (make-linear-index 10 1 1)))))
+             (λ () (index-compose (make-linear-index 10)
+                                  (make-linear-index 10 1 1)))))
 
 (test-case "vector-index empty"
   (check-equal? (index-size (make-vector-index #())) 0)
@@ -124,6 +126,16 @@
   (check-equal? (for/list ([i (in-indices i2)])
                   (index-ref i2 i))
                 '(10 12 14 16 18)))
+
+(test-case "index-select - reversed"
+  (define i0 (index-compose (make-linear-index 100)
+                            (make-linear-index 100 99 -1)))
+  (define i1 (index-select i0 (λ (i) (<= 10 i 14))))
+  (check-equal? (index-ref i0 0) 99)
+  (check-equal? (index-size i1) 5)
+  (check-equal? (for/list ([i (in-indices i1)])
+                  (index-ref i1 i))
+                '(89 88 87 86 85)))
 
 (test-case "index-slice linear"
   (define i (make-linear-index 100))
