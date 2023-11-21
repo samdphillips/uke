@@ -5,9 +5,11 @@
          (prefix-in qi: qi)
          "machete/create.rkt"
          "machete/group.rkt"
+         "machete/slice.rkt"
          "machete/where.rkt")
 
 (provide (all-from-out qi
                        "machete/create.rkt"
                        "machete/group.rkt"
+                       "machete/slice.rkt"
                        "machete/where.rkt"))
