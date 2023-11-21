@@ -10,6 +10,7 @@
          make-dataframe
          dataframe-num-rows
          dataframe-index-update
+         dataframe-series*-update
          dataframe-series
          dataframe-series-ref
          dataframe-series*-ref
@@ -41,7 +42,10 @@
   (dataframe an-index a-series-list))
 
 (define (dataframe-index-update df f)
-  (struct-copy dataframe df (index (f [dataframe-index df]))))
+  (struct-copy dataframe df [index (f [dataframe-index df])]))
+
+(define (dataframe-series*-update df f)
+  (struct-copy dataframe df [series* (f (dataframe-series* df))]))
 
 (define (dataframe-num-rows df)
   (index-size (dataframe-index df)))
@@ -57,10 +61,12 @@
               #:when (equal? (series-name a-series) a-series-name))
     a-series))
 
+;; XXX handle nicer when series is missing
 (define (dataframe-series-ref df a-series-name)
   (series-push-index (dataframe-series*-ref df a-series-name)
                      (dataframe-index df)))
 
+;; XXX procedure-rename
 (define (~dataframe-series-lift df series-names f)
   (define idx (dataframe-index df))
   ;; XXX check series names
@@ -152,6 +158,7 @@
 (define (dataframe-cell-ref* df-index a-series i)
   (series-ref a-series (index-ref df-index i)))
 
+;; XXX dynamic series names are desirable
 (define-syntax-parse-rule
   (for/dataframe (column-names:id ...) for-clauses body ...+)
   #:with this-syntax this-syntax
