@@ -36,6 +36,8 @@
 (define (series-index-update a-series f)
   (struct-copy series a-series (index (f [series-index a-series]))))
 
+;; XXX: series-properties-update
+
 (define (series-size a-series)
   (index-size (series-index a-series)))
 
@@ -99,6 +101,7 @@
        (= (store-length (series-store a-series))
           (index-size idx))))
 
+;; XXX: loses series properties
 (define (series-compact a-series)
   (cond
     [(series-compact? a-series) a-series]
@@ -114,6 +117,7 @@
   (define fmt (series-property-ref a-series '#:render ~a))
   (fmt v))
 
+;; XXX cannot set properties or projection
 (define (build-series name size f)
   (make-series name
                (make-linear-index size 0 1)

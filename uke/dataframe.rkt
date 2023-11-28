@@ -109,6 +109,10 @@
       a-series))
   (struct-copy dataframe df [series* series*]))
 
+;; XXX: dataframe-rename-series
+
+;; XXX: check that this works as intended.
+;;      Also should use dataframe-series*-ref
 (define (dataframe-reorder-series df . series-names)
   (define series*
     (for/list ([name (in-list series-names)])
@@ -140,6 +144,7 @@
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
   (dataframe-index-update df (λ (idx) (index-slice idx start size))))
 
+;; XXX: name output series
 (define (dataframe-group df key-func [aggr-func values])
   (define ((add-index i) v) (cons i v))
     (define groups

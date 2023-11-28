@@ -7,6 +7,8 @@
 
 (provide (for-space qi slice))
 
+;; XXX: simple support for something like dataframe-reorder-series, maybe a
+;;      different reorder operator
 (define-qi-syntax-rule (slice s:slice-spec)
   (esc (λ (df)
          (define name-pred? s.pred?)
