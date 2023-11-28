@@ -15,6 +15,9 @@
          series-size
          series-index
          series-store
+         series-name-update
+         series-index-update
+         series-projection-update
          series-ref
          series-property-ref
          series-push-index
@@ -27,38 +30,65 @@
          vector->series
          sequence->series)
 
-(struct series (name properties index store)
+(struct series (name properties index projection store)
   #:transparent
   #:property prop:sequence
   (λ (s) (sequence-map (λ (i) (series-ref s i))
                        (in-indices (series-index s)))))
 
+(define (series-name-update a-series f)
+  (struct-copy series a-series [name (f (series-name a-series))]))
+
 (define (series-index-update a-series f)
-  (struct-copy series a-series (index (f [series-index a-series]))))
+  (struct-copy series a-series [index (f (series-index a-series))]))
+
+(define (series-projection-update a-series f)
+  (struct-copy series a-series [projection (f (series-projection a-series))]))
 
 ;; XXX: series-properties-update
 
 (define (series-size a-series)
   (index-size (series-index a-series)))
 
-(define (make-series name index store #:properties [properties (hash)])
-  (series name properties index store))
+(define (make-series name
+                     index
+                     store
+                     #:projection [projection #f]
+                     #:properties [properties (hash)])
+  (series name properties index projection store))
+
+(define (apply-series-projection a-series v)
+  (cond
+    [(series-projection a-series) => (λ (p) (p v))]
+    [else v]))
 
 (define (series-ref a-series i)
-  (store-ref (series-store a-series) (index-ref (series-index a-series) i)))
+  (define si (index-ref (series-index a-series) i))
+  (define v (store-ref (series-store a-series) si))
+  (apply-series-projection a-series v))
 
 (define (series-property-ref a-series property [default #f])
   (hash-ref (series-properties a-series) property (λ () default)))
 
-(define (->series name seq #:properties [properties (hash)])
+(define (->series name
+                  seq
+                  #:projection [projection #f]
+                  #:properties [properties (hash)])
   (cond
-    [(vector? seq) (vector->series name seq #:properties properties)]
-    [else (sequence->series name seq)]))
+    [(vector? seq) (vector->series name
+                                   seq
+                                   #:projection projection
+                                   #:properties properties)]
+    [else (sequence->series name
+                            seq
+                            #:projection projection
+                            #:properties properties)]))
 
 (define (vector->series name
                         vec
                         #:size [size #f]
                         #:offset [offset #f]
+                        #:projection [projection #f]
                         #:properties [properties (hash)])
   (define series-offset (or offset 0))
   (define vlen (vector-length vec))
@@ -74,6 +104,7 @@
      (make-series name
                   (make-linear-index series-size series-offset)
                   vec
+                  #:projection projection
                   #:properties properties)]
     [else
      (define i series-offset)
@@ -82,19 +113,25 @@
                   (make-linear-index series-size 0 1)
                   (unsafe-vector*->immutable-vector!
                    (vector-copy vec i j))
+                  #:projection projection
                   #:properties properties)]))
 
-(define (sequence->series name seq #:properties [properties (hash)])
+(define (sequence->series name
+                          seq
+                          #:projection [projection #f]
+                          #:properties [properties (hash)])
   (define-values (store len)
     (sequence->list/length seq))
   (make-series name
                (make-linear-index len)
                (list->immutable-vector store)
+               #:projection projection
                #:properties properties))
 
 (define (series-push-index s idx)
   (struct-copy series s [index (index-compose (series-index s) idx)]))
 
+;; XXX: a series with a projection is not compact
 (define (series-compact? a-series)
   (define idx (series-index a-series))
   (and (index-compact? idx)

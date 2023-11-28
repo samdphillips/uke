@@ -169,3 +169,5 @@
                 '(90 91 92 93 94 95 96 97 98 99))
   (check-equal? (sequence->list (series-slice s 90))
                 '(90 91 92 93 94 95 96 97 98 99)))
+
+;; XXX: tests for series-projection
