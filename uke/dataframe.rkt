@@ -26,7 +26,8 @@
          dataframe-group
          dataframe-cell-ref
          dataframe-cell-ref*
-         for/dataframe)
+         for/dataframe
+         for*/dataframe)
 
 ;; XXX: series-metadata access
 
@@ -164,36 +165,44 @@
   (series-ref a-series (index-ref df-index i)))
 
 ;; XXX dynamic series names are desirable
-(define-syntax-parse-rule
-  (for/dataframe (column-names:id ...) for-clauses body ...+)
-  #:with this-syntax this-syntax
-  #:do [(define stride (length (syntax-e #'(column-names ...))))]
-  #:with (series-v ...) (generate-temporaries #'(column-names ...))
-  #:with (ks ...) (for/list ([i (in-range stride)]) #`'#,i)
-  #:with stride #`'#,stride
-  (let ()
-    (define init-rows 16)
-    (define (build store size)
-      (define series-v
-        (make-series 'column-names (make-linear-index size ks stride) store))
-      ...
-      (dataframe (make-linear-index size) (list series-v ...)))
-    (for/fold/derived this-syntax
-      ([s (make-vector (* init-rows stride))]
-       [i 0] [j 0] [k (sub1 init-rows)]
-       #:result (build s j))
-      for-clauses
-      (call-with-values
-       (λ () body ...)
-       (λ (column-names ...)
-         (vector-set! s (+ i ks) column-names)
-         ...
-         (define (next s k) (values s (+ i stride) (add1 j) (sub1 k)))
-         (cond
-           [(zero? k)
-            (define k (ceiling (* 1/2 (add1 j))))
-            (define next-s (make-vector (* (+ k j 1) stride)))
-            (vector-copy! next-s 0 s)
-            (next next-s k)]
-           [else
-            (next s k)]))))))
+(begin-for-syntax
+  (define (make-for/dataframe for-stx)
+    (syntax-parser
+      [(_ (column-names:id ...) for-clauses body ...+)
+       #:with this-syntax this-syntax
+       #:do [(define stride (length (syntax-e #'(column-names ...))))]
+       #:with (series-v ...) (generate-temporaries #'(column-names ...))
+       #:with (ks ...) (for/list ([i (in-range stride)]) #`'#,i)
+       #:with stride #`'#,stride
+       #:with _for/fold for-stx
+       #'(let ()
+           (define init-rows 16)
+           (define (build store size)
+             (define series-v
+               (make-series 'column-names
+                            (make-linear-index size ks stride)
+                            store))
+             ...
+             (dataframe (make-linear-index size) (list series-v ...)))
+           (_for/fold this-syntax
+             ([s (make-vector (* init-rows stride))]
+              [i 0] [j 0] [k (sub1 init-rows)]
+              #:result (build s j))
+             for-clauses
+             (call-with-values
+              (λ () body ...)
+              (λ (column-names ...)
+                (vector-set! s (+ i ks) column-names)
+                ...
+                (define (next s k) (values s (+ i stride) (add1 j) (sub1 k)))
+                (cond
+                  [(zero? k)
+                   (define k (ceiling (* 1/2 (add1 j))))
+                   (define next-s (make-vector (* (+ k j 1) stride)))
+                   (vector-copy! next-s 0 s)
+                   (next next-s k)]
+                  [else
+                   (next s k)])))))])))
+
+(define-syntax for/dataframe (make-for/dataframe #'for/fold/derived))
+(define-syntax for*/dataframe (make-for/dataframe #'for*/fold/derived))
