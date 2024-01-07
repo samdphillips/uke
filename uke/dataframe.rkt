@@ -35,6 +35,7 @@
 
 ;; XXX: actually compute a compatible index
 ;; XXX: move to index.rkt
+;; XXX: this actually make a really wrong index for a slice
 (define (compatible-index a-series-list)
   (series-index (car a-series-list)))
 
@@ -148,13 +149,13 @@
 ;; XXX: name output series
 (define (dataframe-group df key-func [aggr-func values])
   (define ((add-index i) v) (cons i v))
-    (define groups
-      (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
-        (hash-update groups (key-func i) (add-index i) null)))
-    (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
-      (define group-df
-        (dataframe-index-update df (λ (idx) (index-pick idx g))))
-      (values k (aggr-func group-df))))
+  (define groups
+    (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
+      (hash-update groups (key-func i) (add-index i) null)))
+  (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
+    (define group-df
+      (dataframe-index-update df (λ (idx) (index-pick idx g))))
+    (values k (aggr-func group-df))))
 
 (define (dataframe-cell-ref df a-series-name i)
   (define j (index-ref (dataframe-index df) i))
@@ -178,6 +179,7 @@
        #'(let ()
            (define init-rows 16)
            (define (build store size)
+             ;; XXX: make store immutable
              (define series-v
                (make-series 'column-names
                             (make-linear-index size ks stride)
@@ -185,7 +187,7 @@
              ...
              (dataframe (make-linear-index size) (list series-v ...)))
            (_for/fold this-syntax
-             ([s (make-vector (* init-rows stride))]
+             ([s (make-vector (* init-rows stride) (void))]
               [i 0] [j 0] [k (sub1 init-rows)]
               #:result (build s j))
              for-clauses
@@ -198,7 +200,7 @@
                 (cond
                   [(zero? k)
                    (define k (ceiling (* 1/2 (add1 j))))
-                   (define next-s (make-vector (* (+ k j 1) stride)))
+                   (define next-s (make-vector (* (+ k j 1) stride) (void)))
                    (vector-copy! next-s 0 s)
                    (next next-s k)]
                   [else
