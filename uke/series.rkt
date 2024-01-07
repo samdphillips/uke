@@ -17,6 +17,7 @@
          series-store
          series-name-update
          series-index-update
+         series-properties-update
          series-projection-update
          series-ref
          series-property-ref
@@ -41,6 +42,9 @@
 
 (define (series-index-update a-series f)
   (struct-copy series a-series [index (f (series-index a-series))]))
+
+(define (series-properties-update a-series f)
+  (struct-copy series a-series [properties (f (series-properties a-series))]))
 
 (define (series-projection-update a-series f)
   (struct-copy series a-series [projection (f (series-projection a-series))]))
