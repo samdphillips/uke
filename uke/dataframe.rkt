@@ -167,12 +167,17 @@
 
 ;; XXX dynamic series names are desirable
 (begin-for-syntax
+  (define-syntax-class series-spec
+    [pattern name:id
+      #:attr [prop-name 1] '()
+      #:attr [prop-expr 1] '()]
+    [pattern (name:id {~seq prop-name:keyword prop-expr} ...)])
   (define (make-for/dataframe for-stx)
     (syntax-parser
-      [(_ (column-names:id ...) for-clauses body ...+)
+      [(_ (series:series-spec ...) for-clauses body ...+)
        #:with this-syntax this-syntax
-       #:do [(define stride (length (syntax-e #'(column-names ...))))]
-       #:with (series-v ...) (generate-temporaries #'(column-names ...))
+       #:do [(define stride (length (syntax-e #'(series ...))))]
+       #:with (series-v ...) (generate-temporaries #'(series.name ...))
        #:with (ks ...) (for/list ([i (in-range stride)]) #`'#,i)
        #:with stride #`'#,stride
        #:with _for/fold for-stx
@@ -181,8 +186,10 @@
            (define (build store size)
              ;; XXX: make store immutable
              (define series-v
-               (make-series 'column-names
+               (make-series 'series.name
                             (make-linear-index size ks stride)
+                            #:properties
+                            (hash {~@ 'series.prop-name series.prop-expr} ...)
                             store))
              ...
              (dataframe (make-linear-index size) (list series-v ...)))
@@ -193,8 +200,8 @@
              for-clauses
              (call-with-values
               (λ () body ...)
-              (λ (column-names ...)
-                (vector-set! s (+ i ks) column-names)
+              (λ (series.name ...)
+                (vector-set! s (+ i ks) series.name)
                 ...
                 (define (next s k) (values s (+ i stride) (add1 j) (sub1 k)))
                 (cond
