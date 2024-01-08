@@ -28,7 +28,7 @@
   (chain (compose pure chars->integer) p))
 
 (define (make-number sign? ip fp)
-  (* (if sign? 1 -1) (+ ip (/ fp 10))))
+  (real->double-flonum (* (if sign? 1 -1) (+ ip (/ fp 10)))))
 
 (define number/p
   (do [sign <- (or/p (do (char/p #\-) (pure #f))
