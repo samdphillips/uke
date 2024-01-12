@@ -23,6 +23,7 @@
          dataframe-compact
          dataframe-select
          dataframe-slice
+         dataframe-group-index
          dataframe-group
          dataframe-cell-ref
          dataframe-cell-ref*
@@ -146,12 +147,14 @@
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
   (dataframe-index-update df (λ (idx) (index-slice idx start size))))
 
+(define (dataframe-group-index df key-func)
+  (define ((add-index i) vs) (cons i vs))
+  (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
+    (hash-update groups (key-func i) (add-index i) null)))
+
 ;; XXX: name output series
 (define (dataframe-group df key-func [aggr-func values])
-  (define ((add-index i) v) (cons i v))
-  (define groups
-    (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
-      (hash-update groups (key-func i) (add-index i) null)))
+  (define groups (dataframe-group-index df key-func))
   (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
     (define group-df
       (dataframe-index-update df (λ (idx) (index-pick idx g))))

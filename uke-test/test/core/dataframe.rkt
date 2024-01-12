@@ -108,3 +108,11 @@
   (define tbl
     (for/list ([i (in-indices (dataframe-index df1))]) (f i)))
   (check-equal? tbl '((2 4) (1 2) (0 0))))
+
+(test-case "dataframe-group-index"
+  (define groups
+    (dataframe-group-index students
+                           (dataframe-series-lift students '(name) values)))
+  (check-equal? groups (hash "Bob" (list 0)
+                             "Alice" (list 1)
+                             "Eve" (list 2))))
