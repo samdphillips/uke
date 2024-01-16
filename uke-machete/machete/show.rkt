@@ -7,7 +7,7 @@
 
 (provide show)
 
-(define (show df #:nrows [nrows 10] #:widths [widths '(35)])
+(define (show df #:nrows [nrows 10] #:widths [widths null])
   (define table
     (let ()
       (define idx (dataframe-index df))
