@@ -74,11 +74,15 @@
 ;;        (vector-index? i0) and
 ;;        (index-size i0) != sz
 ;;     only copy relevant part of index instead of recalculating the table.
-(define (index-compose i0 i1)
-  (check-index-compatible 'index-compose i1 i0)
-  (cond
-    [(get-index-op i0 2) => (λ (f) (f i0 i1))]
-    [else (generic-index-compose i0 i1)]))
+(define index-compose
+  (case-lambda
+    [(i0 i1)
+     (check-index-compatible 'index-compose i1 i0)
+     (cond
+       [(get-index-op i0 2) => (λ (f) (f i0 i1))]
+       [else (generic-index-compose i0 i1)])]
+    [(i0 i1 . rest)
+     (apply index-compose (index-compose i0 i1) rest)]))
 
 (define (index-max-range idx)
   (if (zero? (index-size idx))
