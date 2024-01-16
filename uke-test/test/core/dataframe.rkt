@@ -116,3 +116,12 @@
   (check-equal? groups (hash "Bob" (list 0)
                              "Alice" (list 1)
                              "Eve" (list 2))))
+
+(test-case "dataframe-left-join"
+  (define df-joined
+    (dataframe-left-join
+     students (dataframe-series-lift students '(name age) list) null
+     gradebook (dataframe-series-lift gradebook '(name age) list) '(name age)))
+  ;; XXX: better checks
+  (check-equal? (dataframe-num-rows df-joined) 3)
+  (check-equal? (length (dataframe-series* df-joined)) 9))

@@ -25,6 +25,7 @@
          dataframe-slice
          dataframe-group-index
          dataframe-group
+         dataframe-left-join
          dataframe-cell-ref
          dataframe-cell-ref*
          for/dataframe
@@ -159,6 +160,35 @@
     (define group-df
       (dataframe-index-update df (λ (idx) (index-pick idx g))))
     (values k (aggr-func group-df))))
+
+(define (dataframe-left-join dfl keyl removel
+                             dfr keyr remover)
+  (define groupl (dataframe-group-index dfl keyl))
+  (define groupr (dataframe-group-index dfr keyr))
+
+  (define (list->index dfi vs)
+    (index-compose dfi (make-vector-index (list->vector (reverse vs)))))
+  (define (make-new-series df remove-series join-index)
+    (define dfi (dataframe-index df))
+    (for/list ([s (in-list (dataframe-series* df))]
+               #:unless (member (series-name s) remove-series))
+      (series-index-update s (λ (idx) (index-compose idx dfi join-index)))))
+  (define-values (il ir)
+    (for*/fold ([il null]
+                [ir null]
+                #:result
+                (values (list->index (dataframe-index dfl) il)
+                        (list->index (dataframe-index dfr) ir)))
+               ([(g i*) (in-immutable-hash groupl)]
+                #:do [(define j* (hash-ref groupr g '(-1)))]
+                [i (in-list i*)]
+                [j (in-list j*)])
+      (values (cons i il) (cons j ir))))
+  (make-dataframe
+   #:index (make-linear-index (index-size il))
+   (append
+    (make-new-series dfl removel il)
+    (make-new-series dfr remover ir))))
 
 (define (dataframe-cell-ref df a-series-name i)
   (define j (index-ref (dataframe-index df) i))
