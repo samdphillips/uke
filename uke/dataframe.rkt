@@ -31,7 +31,8 @@
 
          for/dataframe
          for*/dataframe
-         row-df)
+         row-df
+         column-df)
 
 ;; XXX: series-metadata access
 
@@ -270,5 +271,24 @@
                    (hash {~@ 'series.prop-name series.prop-expr} ...)
                    (make-linear-index num-rows ks stride)
                    store)) ...
+    (make-dataframe #:index (make-linear-index num-rows)
+                    (list series-v ...))))
+
+(define-syntax-parse-rule (column-df [series:series-spec . elems] ...)
+  #:with (series-v ...) (generate-temporaries #'(series ...))
+  #:do [(define nr
+          (for/list ([e* (in-list (syntax-e #'(elems ...)))])
+            (length (syntax-e e*))))]
+  #:fail-unless (if (null? nr) #t (apply = nr))
+  (format "columns are different sizes ~a" nr)
+  #:with num-rows #`'#,(if (null? nr) 0 (car nr))
+
+  (let ()
+    (define series-v
+      (make-series 'series.name
+                   #:properties
+                   (hash {~@ 'series.prop-name series.prop-expr} ...)
+                   (make-linear-index num-rows)
+                   (vector-immutable . elems))) ...
     (make-dataframe #:index (make-linear-index num-rows)
                     (list series-v ...))))
