@@ -13,8 +13,8 @@
   (define students3
     (~> (students)
         (slice (not color))))
-  (check-false (dataframe-series*-ref students2 'color))
-  (check-false (dataframe-series*-ref students3 'color))
+  (check-false (dataframe-series*-ref students2 'color #f))
+  (check-false (dataframe-series*-ref students3 'color #f))
   (check-equal? (sequence->list
                  (dataframe-series-ref students2 'name))
                 (sequence->list
@@ -30,8 +30,8 @@
         (create
          [is-teenager (age) (and (< 12 _) (< _ 20))])
         (slice (or name is-teenager))))
-  (check-false (dataframe-series*-ref students2 'color))
-  (check-false (dataframe-series*-ref students2 'age))
+  (check-false (dataframe-series*-ref students2 'color #f))
+  (check-false (dataframe-series*-ref students2 'age #f))
   (check-equal? (sequence->list
                  (dataframe-series-ref students2 'name))
                 '("Bob" "Alice" "Eve"))
@@ -47,8 +47,8 @@
         (create
          [is-teenager (age) (and (< 12 _) (< _ 20))])
         (slice (or is-teenager name))))
-  (check-false (dataframe-series*-ref students2 'color))
-  (check-false (dataframe-series*-ref students2 'age))
+  (check-false (dataframe-series*-ref students2 'color #f))
+  (check-false (dataframe-series*-ref students2 'age #f))
   (check-equal? (sequence->list
                  (dataframe-series-ref students2 'name))
                 '("Eve" "Alice" "Bob"))

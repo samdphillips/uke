@@ -3,6 +3,7 @@
 (require (for-syntax racket/base)
          racket/unsafe/ops
          syntax/parse/define
+         "error.rkt"
          "index.rkt"
          "series.rkt")
 
@@ -62,22 +63,44 @@
   (for/list ([a-series (in-list (dataframe-series* a-dataframe))])
     (series-push-index a-series an-index)))
 
-;; get a series out of a dataframe without pushing an index into it
-(define (dataframe-series*-ref df a-series-name)
-  (for/first ([a-series (in-list (dataframe-series* df))]
-              #:when (equal? (series-name a-series) a-series-name))
-    a-series))
+(define (dataframe-series-ref-failure who)
+  (lambda ()
+    (raise-uke-error exn:uke:dataframe
+                     who
+                     "series does not exist in dataframe")))
 
-;; XXX handle nicer when series is missing
-(define (dataframe-series-ref df a-series-name)
-  (series-push-index (dataframe-series*-ref df a-series-name)
-                     (dataframe-index df)))
+;; get a series out of a dataframe without pushing an index into it
+(define (dataframe-series*-ref df
+                               a-series-name
+                               [failure-result
+                                (dataframe-series-ref-failure
+                                 'dataframe-series*-ref)]
+                               [success-result values])
+  (define found
+    (for/first ([a-series (in-list (dataframe-series* df))]
+                #:when (equal? (series-name a-series) a-series-name))
+      a-series))
+  (cond
+    [found => success-result]
+    [(procedure? failure-result) (failure-result)]
+    [else failure-result]))
+
+(define (dataframe-series-ref df
+                              a-series-name
+                              [failure-result
+                               (dataframe-series-ref-failure
+                                'dataframe-series-ref)])
+  (dataframe-series*-ref df
+                         a-series-name
+                         failure-result
+                         (lambda (s)
+                           (series-push-index s (dataframe-index df)))))
 
 (define ~dataframe-series-lift
   (procedure-rename
    (lambda (df series-names f)
      (define idx (dataframe-index df))
-     ;; XXX check series names
+     ;; XXX better error for missing series names
      (define refs
        (for/list ([n (in-list series-names)])
          (define s (dataframe-series*-ref df n))
@@ -94,6 +117,7 @@
      #'(let ()
          (define df df-expr.c)
          (define idx (dataframe-index df))
+         ;; XXX better error for missing series names
          (define a-series (dataframe-series*-ref df 'series-names))
          ...
          (λ (i)
