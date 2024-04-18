@@ -73,16 +73,18 @@
   (series-push-index (dataframe-series*-ref df a-series-name)
                      (dataframe-index df)))
 
-;; XXX procedure-rename
-(define (~dataframe-series-lift df series-names f)
-  (define idx (dataframe-index df))
-  ;; XXX check series names
-  (define refs
-    (for/list ([n (in-list series-names)])
-      (define s (dataframe-series*-ref df n))
-      (λ (i) (dataframe-cell-ref* idx s i))))
-  (λ (i)
-    (apply f (for/list ([ref (in-list refs)]) (ref i)))))
+(define ~dataframe-series-lift
+  (procedure-rename
+   (lambda (df series-names f)
+     (define idx (dataframe-index df))
+     ;; XXX check series names
+     (define refs
+       (for/list ([n (in-list series-names)])
+         (define s (dataframe-series*-ref df n))
+         (λ (i) (dataframe-cell-ref* idx s i))))
+     (λ (i)
+       (apply f (for/list ([ref (in-list refs)]) (ref i)))))
+   'dataframe-series-lift))
 
 (define-syntax dataframe-series-lift
   (syntax-parser
