@@ -156,7 +156,6 @@
   (for/fold ([groups (hash)]) ([i (in-indices (dataframe-index df))])
     (hash-update groups (key-func i) (add-index i) null)))
 
-;; XXX: name output series
 (define (dataframe-group df key-func [aggr-func values])
   (define groups (dataframe-group-index df key-func))
   (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
@@ -228,7 +227,8 @@
                             (hash {~@ 'series.prop-name series.prop-expr} ...)
                             store))
              ...
-             (dataframe (make-linear-index size) (list series-v ...)))
+             (make-dataframe #:index (make-linear-index size)
+                             (list series-v ...)))
            (_for/fold this-syntax
              ([s (make-vector (* init-rows stride) (void))]
               [i 0] [j 0] [k (sub1 init-rows)]
