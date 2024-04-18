@@ -3,6 +3,7 @@
 (require racket/sequence
          rackunit
          uke/dataframe
+         uke/error
          uke/index
          uke/series
          "../b2t2-tables.rkt")
@@ -43,6 +44,17 @@
   (define df3 (dataframe-compact df2))
   (check-equal? (sequence->list (dataframe-series-ref df3 'a))
                 (sequence->list (dataframe-series-ref df2 'a))))
+
+(test-case "dataframe-series-ref"
+  (define df0 (for/dataframe (a b) ([i 10]) (values i (* 2 i))))
+  (check-equal? (sequence->list (dataframe-series-ref df0 'a))
+                '(0 1 2 3 4 5 6 7 8 9))
+  (check-equal? (dataframe-series-ref df0 'c 'missing)
+                'missing)
+  (check-exn
+   exn:uke:dataframe?
+   (lambda ()
+     (dataframe-series-ref df0 'c))))
 
 (test-case "dataframe-slice"
   (define df0 (for/dataframe (a b) ([i 100]) (values i (* 2 i))))
