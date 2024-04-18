@@ -28,8 +28,10 @@
          dataframe-left-join
          dataframe-cell-ref
          dataframe-cell-ref*
+
          for/dataframe
-         for*/dataframe)
+         for*/dataframe
+         row-df)
 
 ;; XXX: series-metadata access
 
@@ -198,7 +200,7 @@
 (define (dataframe-cell-ref* df-index a-series i)
   (series-ref a-series (index-ref df-index i)))
 
-;; XXX dynamic series names are desirable
+;; XXX dynamic series names are desirable?
 (begin-for-syntax
   (define-syntax-class series-spec
     [pattern name:id
@@ -248,3 +250,25 @@
 
 (define-syntax for/dataframe (make-for/dataframe #'for/fold/derived))
 (define-syntax for*/dataframe (make-for/dataframe #'for*/fold/derived))
+
+(define-syntax-parse-rule (row-df [series:series-spec ...] . elems)
+  #:do [(define stride (length (syntax-e #'(series ...))))
+        (define elems-size (length (syntax-e #'elems)))]
+  #:fail-unless (zero? (modulo elems-size stride))
+  (format "incorrect number of elements for ~a columns" stride)
+
+  #:with (series-v ...) (generate-temporaries #'(series ...))
+  #:with (ks ...) (for/list ([i (in-range stride)]) #`'#,i)
+  #:with num-rows #`'#,(quotient elems-size stride)
+  #:with stride #`'#,stride
+
+  (let ()
+    (define store (vector-immutable . elems))
+    (define series-v
+      (make-series 'series.name
+                   #:properties
+                   (hash {~@ 'series.prop-name series.prop-expr} ...)
+                   (make-linear-index num-rows ks stride)
+                   store)) ...
+    (make-dataframe #:index (make-linear-index num-rows)
+                    (list series-v ...))))
