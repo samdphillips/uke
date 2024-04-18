@@ -49,8 +49,6 @@
 (define (series-projection-update a-series f)
   (struct-copy series a-series [projection (f (series-projection a-series))]))
 
-;; XXX: series-properties-update
-
 (define (series-size a-series)
   (index-size (series-index a-series)))
 
