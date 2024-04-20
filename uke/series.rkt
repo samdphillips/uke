@@ -14,6 +14,8 @@
          series-name
          series-size
          series-index
+         series-properties
+         series-projection
          series-store
          series-name-update
          series-index-update
