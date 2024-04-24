@@ -68,18 +68,20 @@
   (for/list ([a-series (in-list (dataframe-series* a-dataframe))])
     (series-push-index a-series an-index)))
 
-(define (dataframe-series-ref-failure who)
+(define (dataframe-series-ref-failure who a-series-name)
   (lambda ()
     (raise-uke-error exn:uke:dataframe
                      who
-                     "series does not exist in dataframe")))
+                     "series ~a does not exist in dataframe"
+                     a-series-name)))
 
 ;; get a series out of a dataframe without pushing an index into it
 (define (dataframe-series*-ref df
                                a-series-name
                                [failure-result
                                 (dataframe-series-ref-failure
-                                 'dataframe-series*-ref)]
+                                 'dataframe-series*-ref
+                                 a-series-name)]
                                [success-result values])
   (define found
     (for/first ([a-series (in-list (dataframe-series* df))]
@@ -94,7 +96,8 @@
                               a-series-name
                               [failure-result
                                (dataframe-series-ref-failure
-                                'dataframe-series-ref)])
+                                'dataframe-series-ref
+                                a-series-name)])
   (dataframe-series*-ref df
                          a-series-name
                          failure-result
