@@ -23,6 +23,7 @@
          index-reverse
          index-sort
 
+         check-index-compatible*
          exn:uke:index?
 
          vector-index?
@@ -61,6 +62,10 @@
                      "indexes incompatible: range ~a > size ~a"
                      (index-max-range i0)
                      (index-size i1))))
+
+(define (check-index-compatible* who idx idx*)
+  (for ([i (in-list idx*)])
+    (check-index-compatible who idx i)))
 
 (define (index-ref idx i)
   (check-index-bounds 'index-ref idx i)

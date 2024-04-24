@@ -29,6 +29,7 @@
   (define df3 (dataframe-compact df2))
   (define df4
     (make-dataframe
+     #:index (make-linear-index 10)
      (list (vector->series 'a (build-vector 10 values)))))
 
   (check-false (dataframe-compact? df0))

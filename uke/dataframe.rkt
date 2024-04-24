@@ -42,11 +42,16 @@
 ;; XXX: actually compute a compatible index
 ;; XXX: move to index.rkt
 ;; XXX: this actually make a really wrong index for a slice
+#;
 (define (compatible-index a-series-list)
   (series-index (car a-series-list)))
 
 (define (make-dataframe a-series-list
-                        #:index [an-index (compatible-index a-series-list)])
+                        #:index an-index)
+  (check-index-compatible* 'make-dataframe
+                           an-index
+                           (for/list ([s (in-list a-series-list)])
+                             (series-index s)))
   (dataframe an-index a-series-list))
 
 (define (dataframe-index-update df f)
@@ -165,9 +170,13 @@
     [(dataframe-compact? df) df]
     [else
      (make-dataframe
-      ;; XXX: dataframe-series allocates series and index
+      ;; XXX: dataframe-series allocates series and index (which may be
+      ;;      short lived since we then compact it)
+      ;; XXX: could reuse index if it is compact
       (for/list ([s (in-list (dataframe-series df))])
-        (series-compact s)))]))
+        (series-compact s))
+      #:index (make-linear-index
+               (index-size (dataframe-index df))))]))
 
 (define (dataframe-select df pred?)
   (define (select idx0)
