@@ -154,7 +154,7 @@
 
 ;; XXX: check that this works as intended.
 ;;      Also should use dataframe-series*-ref
-(define (dataframe-reorder-series df . series-names)
+(define (dataframe-reorder-series df series-names)
   (define series*
     (for/list ([name (in-list series-names)])
       (dataframe-series-ref df name)))

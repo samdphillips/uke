@@ -11,6 +11,7 @@
 
 (provide make-series
          series?
+         series=?
          series-name
          series-size
          series-index
@@ -53,6 +54,12 @@
 
 (define (series-size a-series)
   (index-size (series-index a-series)))
+
+(define (series=? s1 s2)
+  (and (= (series-size s1) (series-size s2))
+       (for/and ([i (in-indices (series-index s1))])
+         (equal? (series-ref s1 i)
+                 (series-ref s2 i)))))
 
 (define (make-series name
                      index

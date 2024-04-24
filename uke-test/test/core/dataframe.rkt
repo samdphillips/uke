@@ -138,3 +138,28 @@
   ;; XXX: better checks
   (check-equal? (dataframe-num-rows df-joined) 3)
   (check-equal? (length (dataframe-series* df-joined)) 9))
+
+(test-case "dataframe-reorder-series"
+  (check-equal? (for/list ([s (in-list (dataframe-series students))])
+                  (series-name s))
+                '(name age color))
+  (define s2 (dataframe-reorder-series students '(age name color)))
+  (check-equal? (for/list ([s (in-list (dataframe-series s2))])
+                  (series-name s))
+                '(age name color))
+
+  (for ([s (in-list (dataframe-series students))])
+    (define n (series-name s))
+    (check-true (series=? s (dataframe-series-ref s2 n))
+                (format "~a series not the same" n)))
+
+  ; dataframe-reorder-series can also drop (maybe this is not good?)
+  (define s3 (dataframe-reorder-series students '(age name)))
+  (check-equal? (for/list ([s (in-list (dataframe-series s3))])
+                  (series-name s))
+                '(age name))
+
+  (for ([s (in-list (dataframe-series s3))])
+    (define n (series-name s))
+    (check-true (series=? s (dataframe-series-ref students n))
+                (format "~a series not the same" n))))
