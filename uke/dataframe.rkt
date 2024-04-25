@@ -152,13 +152,19 @@
 
 ;; XXX: dataframe-rename-series
 
-;; XXX: check that this works as intended.
-;;      Also should use dataframe-series*-ref
 (define (dataframe-reorder-series df series-names)
   (define series*
     (for/list ([name (in-list series-names)])
       (dataframe-series-ref df name)))
-  (struct-copy dataframe df [series* series*]))
+  (define (reorder s*)
+    (for/list ([name (in-list series-names)])
+      (define fail
+        (dataframe-series-ref-failure 'dataframe-reorder-series name))
+      (or (for/first ([a-series (in-list s*)]
+                      #:when (equal? (series-name a-series) name))
+            a-series)
+          (fail))))
+  (dataframe-series*-update df reorder))
 
 (define (dataframe-reverse-rows df)
   (dataframe-index-update df index-reverse))
