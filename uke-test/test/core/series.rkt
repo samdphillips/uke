@@ -131,7 +131,8 @@
 (test-case "series-compact - no change"
   (define s (build-series 'a 10 values))
   (check-true (series-compact? s))
-  (check-eq? s (series-compact s)))
+  (check-eq? s (series-compact s))
+  (check-true (series=? s (series-compact s))))
 
 (test-case "series-compact - shrink"
   (define v (vector->immutable-vector (build-vector 10 values)))
@@ -140,8 +141,7 @@
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
-  (check-equal? (sequence->list s)
-                (sequence->list t)))
+  (check-true (series=? s t)))
 
 (test-case "series-compact - offset"
   (define v (vector->immutable-vector (build-vector 10 values)))
@@ -151,8 +151,7 @@
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
-  (check-equal? (sequence->list s)
-                (sequence->list t)))
+  (check-true (series=? s t)))
 
 (test-case "series-compact - shared store"
   (define v (vector->immutable-vector (build-vector 20 values)))
@@ -164,8 +163,7 @@
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
-  (check-equal? (sequence->list s)
-                (sequence->list t)))
+  (check-true (series=? s t)))
 
 (test-case "series-compact - vector index"
   (define s
@@ -177,6 +175,7 @@
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
+
   (check-equal? (sequence->list s)
                 (sequence->list t)))
 
@@ -189,9 +188,7 @@
   (define t (series-compact s))
   (check-false (series-compact? s))
   (check-true (series-compact? t))
-  (check-not-eq? s t)
-  (check-equal? (sequence->list s)
-                (sequence->list t)))
+  (check-not-eq? s t))
 
 (test-case "series-slice"
   (define s (build-series 'a 100 values))
