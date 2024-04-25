@@ -96,6 +96,38 @@
   (check-match (series-index s) (linear-index 10 0 1))
   (check-equal? (sequence->list s) '(0 1 2 3 4 5 6 7 8 9)))
 
+(test-case "series=?"
+  (define s (vector->series 'a #(0 2 4 6 8)))
+  (define t
+    (series-index-update
+     (build-series 'a 10 values)
+     (λ (idx)
+       (index-select idx even?))))
+  (check-true (series=? s t))
+  (check-false (series=? s (series-name-update t (λ (old) 'b)))
+               "series with different names are not the same")
+  (check-false (series=? (build-series 'a 10 values)
+                         (build-series 'a 20 values))
+               "series that are different sizes are not the same")
+  (check-false (series=? (build-series 'a 10 values)
+                         (build-series 'a 10 (λ (x) (* x 2))))))
+
+(test-case "series*=?"
+  (define s (vector->series 'a #(0 2 4 6 8)))
+  (define t
+    (series-index-update
+     (build-series 'a 10 values)
+     (λ (idx)
+       (index-select idx even?))))
+  (define i (make-linear-index 3))
+  (define j (make-vector-index #(0 1 2)))
+  (check-true (series*=? i s i s))
+  (check-true (series*=? i s i t))
+  (check-true (series*=? i s j t))
+  (check-true (series*=? j s i t))
+
+  (check-false (series*=? i s (make-linear-index 0) s)))
+
 (test-case "series-compact - no change"
   (define s (build-series 'a 10 values))
   (check-true (series-compact? s))
