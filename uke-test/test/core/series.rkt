@@ -176,8 +176,7 @@
   (check-true (series-compact? t))
   (check-not-eq? s t)
 
-  (check-equal? (sequence->list s)
-                (sequence->list t)))
+  (check-true (series=? s t)))
 
 (test-case "series-compact - vector index - out of order"
   (define s
@@ -189,6 +188,21 @@
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t))
+
+(test-case "series-compact - projection"
+  (define v
+    (vector->immutable-vector (build-vector 10 (λ (i) (cons i (* 2 i))))))
+  (define i (make-linear-index 10))
+  (define s (make-series 's i v #:projection car))
+  (define t (make-series 't i v #:projection cdr))
+
+  (check-false (series-compact? s))
+  (check-false (series-compact? t))
+
+  (check-true (series=? s (series-compact s)))
+  (check-true (series=? t (series-compact t)))
+  (check-not-eq? s (series-compact s))
+  (check-not-eq? t (series-compact t)))
 
 (test-case "series-slice"
   (define s (build-series 'a 100 values))

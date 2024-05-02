@@ -154,12 +154,12 @@
 (define (series-push-index s idx)
   (struct-copy series s [index (index-compose (series-index s) idx)]))
 
-;; XXX: a series with a projection is not compact
 (define (series-compact? a-series)
-  (define idx (series-index a-series))
-  (and (index-compact? idx)
-       (= (store-length (series-store a-series))
-          (index-size idx))))
+  (and (not (series-projection a-series))
+       (let ([idx (series-index a-series)])
+         (and (index-compact? idx)
+              (= (store-length (series-store a-series))
+                 (index-size idx))))))
 
 ;; XXX: loses series properties
 (define (series-compact a-series)
