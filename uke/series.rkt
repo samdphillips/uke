@@ -161,14 +161,14 @@
               (= (store-length (series-store a-series))
                  (index-size idx))))))
 
-;; XXX: loses series properties
 (define (series-compact a-series)
   (cond
     [(series-compact? a-series) a-series]
     [else
      (build-series (series-name a-series)
                    (series-size a-series)
-                   (λ (i) (series-ref a-series i)))]))
+                   (λ (i) (series-ref a-series i))
+                   #:properties (series-properties a-series))]))
 
 (define (series-slice a-series start [size (- (series-size a-series) start)])
   (series-index-update a-series (λ (idx) (index-slice idx start size))))
@@ -177,9 +177,14 @@
   (define fmt (series-property-ref a-series '#:render ~a))
   (fmt v))
 
-;; XXX cannot set properties or projection
-(define (build-series name size f)
+(define (build-series name
+                      size
+                      f
+                      #:projection [projection #f]
+                      #:properties [properties (hash)])
   (make-series name
                (make-linear-index size 0 1)
                (unsafe-vector*->immutable-vector!
-                (build-vector size f))))
+                (build-vector size f))
+               #:projection projection
+               #:properties properties))

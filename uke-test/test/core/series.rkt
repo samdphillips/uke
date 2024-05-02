@@ -129,65 +129,77 @@
   (check-false (series*=? i s (make-linear-index 0) s)))
 
 (test-case "series-compact - no change"
-  (define s (build-series 'a 10 values))
+  (define s (build-series 'a 10 values #:properties (hash '#:has-prop? #t)))
   (check-true (series-compact? s))
   (check-eq? s (series-compact s))
-  (check-true (series=? s (series-compact s))))
+  (check-true (series=? s (series-compact s)))
+  (check-true (series-property-ref s '#:has-prop? #f)))
 
 (test-case "series-compact - shrink"
   (define v (vector->immutable-vector (build-vector 10 values)))
-  (define s (vector->series 'a v #:size 5))
+  (define s (vector->series 'a v
+                            #:size 5
+                            #:properties (hash '#:has-prop? #t)))
   (define t (series-compact s))
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
-  (check-true (series=? s t)))
+  (check-true (series=? s t))
+  (check-true (series-property-ref t '#:has-prop? #f)))
 
 (test-case "series-compact - offset"
   (define v (vector->immutable-vector (build-vector 10 values)))
-  (define s (vector->series 'a v #:offset 5))
+  (define s (vector->series 'a v #:offset 5
+                            #:properties (hash '#:has-prop? #t)))
   (define t (series-compact s))
 
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
-  (check-true (series=? s t)))
+  (check-true (series=? s t))
+  (check-true (series-property-ref t '#:has-prop? #f)))
 
 (test-case "series-compact - shared store"
   (define v (vector->immutable-vector (build-vector 20 values)))
   (define s
     (make-series 'a
                  (make-linear-index 10 0 2)
-                 v))
+                 v
+                 #:properties (hash '#:has-prop? #t)))
   (define t (series-compact s))
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
-  (check-true (series=? s t)))
+  (check-true (series=? s t))
+  (check-true (series-property-ref t '#:has-prop? #f)))
 
 (test-case "series-compact - vector index"
   (define s
     (make-series 'a
                  (make-vector-index
                   (build-vector 10 values))
-                 (vector->immutable-vector (build-vector 10 values))))
+                 (vector->immutable-vector (build-vector 10 values))
+                 #:properties (hash '#:has-prop? #t)))
   (define t (series-compact s))
   (check-false (series-compact? s))
   (check-true (series-compact? t))
   (check-not-eq? s t)
 
-  (check-true (series=? s t)))
+  (check-true (series=? s t))
+  (check-true (series-property-ref t '#:has-prop? #f)))
 
 (test-case "series-compact - vector index - out of order"
   (define s
     (make-series 'a
                  (make-vector-index
                   (build-vector 10 (λ (i) (- 9 i))))
-                 (vector->immutable-vector (build-vector 10 values))))
+                 (vector->immutable-vector (build-vector 10 values))
+                 #:properties (hash '#:has-prop? #t)))
   (define t (series-compact s))
   (check-false (series-compact? s))
   (check-true (series-compact? t))
-  (check-not-eq? s t))
+  (check-not-eq? s t)
+  (check-true (series-property-ref t '#:has-prop? #f)))
 
 (test-case "series-compact - projection"
   (define v
@@ -213,4 +225,11 @@
   (check-equal? (sequence->list (series-slice s 90))
                 '(90 91 92 93 94 95 96 97 98 99)))
 
-;; XXX: tests for series-projection
+(test-case "series-projection"
+  (define s (build-series 'a
+                          10
+                          values
+                          #:projection (λ (v) (* v 2))))
+
+  (check-equal? (sequence->list s)
+                '(0 2 4 6 8 10 12 14 16 18)))
