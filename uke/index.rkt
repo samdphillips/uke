@@ -95,7 +95,8 @@
       (apply-index-op idx 3)))
 
 ;; XXX: what if fixnums represented simple linear indexes with
-;;      stride = 1 and offset = 0 ?
+;;      stride = 1 and offset = 0, a negative fixnum could
+;;      be stride = -1 ?
 (define (index-compact? idx)
   (and (linear-index? idx)
        (zero? (linear-index-offset idx))
