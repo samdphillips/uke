@@ -94,13 +94,16 @@
       -1
       (apply-index-op idx 3)))
 
+;; XXX: what if fixnums represented simple linear indexes with
+;;      stride = 1 and offset = 0 ?
 (define (index-compact? idx)
   (and (linear-index? idx)
        (zero? (linear-index-offset idx))
        (let ([s (linear-index-stride idx)])
          (or (= 1 s) (= 0 s)))))
 
-;; XXX in-indices should probably work on indexes, series, and dataframes.
+;; XXX in-indices should probably work on indexes, series, and
+;;     dataframes (better ergonomics)
 ;; XXX this name is bad
 (define in-indices-sequence
   (procedure-rename
