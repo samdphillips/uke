@@ -6,6 +6,7 @@
          uke/error
          uke/index
          uke/series
+         uke/machete
          "../b2t2-tables.rkt")
 
 (test-case "dataframe-reverse-rows linear-index"
@@ -112,6 +113,27 @@
   (define tbl
     (for/list ([i (in-indices (dataframe-index df0))]) (f i)))
   (check-equal? tbl '((0 0) (1 2) (2 4))))
+
+(test-case "dataframe sorting"
+  (define df0
+    (for/dataframe (x y) ([v 10])
+      (if (odd? v) (values v v) (values v #f))))
+
+  (define df1 (~> (df0)
+                  dataframe-compact
+                  (where (y) _)
+                  dataframe-reverse-rows))
+
+  (define df2
+    (let* ([f (dataframe-series-lift df1 '(y) values)]
+           [lt? (λ (i j) (< (f i) (f j)))])
+      (dataframe-index-update df1
+                              (λ (idx)
+                                (index-sort idx lt?)))))
+  (check-equal? (sequence->list (dataframe-series-ref df1 'x))
+                '(9 7 5 3 1))
+  (check-equal? (sequence->list (dataframe-series-ref df2 'x))
+                '(1 3 5 7 9)))
 
 (test-case "dataframe-series-lift - linear reversed  - procedural"
   (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))

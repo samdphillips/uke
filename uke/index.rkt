@@ -142,9 +142,11 @@
   (index-compose idx (make-linear-index n (sub1 n) -1)))
 
 (define (index-sort idx lt?)
-  (make-vector-index
-   (list->vector
-    (sort (sequence->list (in-indices-sequence idx)) lt?))))
+  (define i* (sort (sequence->list (in-indices idx)) lt?))
+  (define vec
+    (unsafe-vector*->immutable-vector!
+     (for/vector ([i (in-list i*)]) (index-ref idx i))))
+  (make-vector-index vec))
 
 (define (do-generic-index-compose i0 i1)
   (define vec (make-vector (index-size i1)))
