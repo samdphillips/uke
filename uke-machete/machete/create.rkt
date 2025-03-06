@@ -11,6 +11,7 @@
 
 (provide (for-space qi create))
 
+;; XXX create multiple series from a single create-column-spec
 (define-qi-syntax-rule (create series:create-column-spec ...)
   (esc (λ (df)
          (define n (dataframe-num-rows df))

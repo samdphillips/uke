@@ -119,6 +119,7 @@
 
 (define-syntax dataframe-series-lift
   (syntax-parser
+    #:literals (quote)
     [(_ df-expr '(series-names:id ...) proc)
      #:declare df-expr (expr/c #'dataframe?)
      #:with (a-series ...) (generate-temporaries #'(series-names ...))
@@ -136,6 +137,7 @@
 (define (dataframe-add-series* df . series-to-add)
   (define df-idx (dataframe-index df))
   (define series*
+    ;; XXX: same as dataframe-series
     (for/list ([a-series (in-list (dataframe-series* df))])
       (series-push-index a-series df-idx)))
   ;; XXX: this can just be make-dataframe
@@ -152,6 +154,7 @@
 
 ;; XXX: dataframe-rename-series
 
+;; XXX: this looks weird
 (define (dataframe-reorder-series df series-names)
   (define series*
     (for/list ([name (in-list series-names)])
