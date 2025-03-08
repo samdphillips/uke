@@ -1,8 +1,8 @@
 #lang racket/base
 
-(require uke/dataframe
-         uke/index
-         uke/series)
+(require uke/column
+         uke/dataframe
+         uke/index)
 
 (provide gradebook
          students)

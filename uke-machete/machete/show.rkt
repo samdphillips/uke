@@ -1,8 +1,8 @@
 #lang racket/base
 
-(require uke/dataframe
+(require uke/column
+         uke/dataframe
          uke/index
-         uke/series
          uni-table)
 
 (provide show)
@@ -11,14 +11,14 @@
   (define table
     (let ()
       (define idx (dataframe-index df))
-      (define series (dataframe-series df))
+      (define cols (dataframe-columns df))
       (cons
-       (for/list ([col (in-list series)])
-         (series-name col))
+       (for/list ([col (in-list cols)])
+         (column-name col))
        (for/list ([n (in-range nrows)]
                   [i (in-range (index-size idx))])
-         (for/list ([col (in-list series)])
-           (series-render-cell col (series-ref col i)))))))
+         (for/list ([col (in-list cols)])
+           (column-render-cell col (column-ref col i)))))))
   (print-uni-table table
                    #:col-widths
                    (map list widths)

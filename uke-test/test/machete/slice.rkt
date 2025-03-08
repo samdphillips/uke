@@ -13,16 +13,16 @@
   (define students3
     (~> (students)
         (slice (not color))))
-  (check-false (dataframe-series*-ref students2 'color #f))
-  (check-false (dataframe-series*-ref students3 'color #f))
+  (check-false (dataframe-column*-ref students2 'color #f))
+  (check-false (dataframe-column*-ref students3 'color #f))
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'name))
+                 (dataframe-column-ref students2 'name))
                 (sequence->list
-                 (dataframe-series-ref students3 'name)))
+                 (dataframe-column-ref students3 'name)))
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'age))
+                 (dataframe-column-ref students2 'age))
                 (sequence->list
-                 (dataframe-series-ref students3 'age))))
+                 (dataframe-column-ref students3 'age))))
 
 (test-case "slice - students - added column"
   (define students2
@@ -30,13 +30,13 @@
         (create
          [is-teenager (age) (and (< 12 _) (< _ 20))])
         (slice (or name is-teenager))))
-  (check-false (dataframe-series*-ref students2 'color #f))
-  (check-false (dataframe-series*-ref students2 'age #f))
+  (check-false (dataframe-column*-ref students2 'color #f))
+  (check-false (dataframe-column*-ref students2 'age #f))
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'name))
+                 (dataframe-column-ref students2 'name))
                 '("Bob" "Alice" "Eve"))
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'is-teenager))
+                 (dataframe-column-ref students2 'is-teenager))
                 '(#f #t #t)))
 
 
@@ -47,11 +47,11 @@
         (create
          [is-teenager (age) (and (< 12 _) (< _ 20))])
         (slice (or is-teenager name))))
-  (check-false (dataframe-series*-ref students2 'color #f))
-  (check-false (dataframe-series*-ref students2 'age #f))
+  (check-false (dataframe-column*-ref students2 'color #f))
+  (check-false (dataframe-column*-ref students2 'age #f))
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'name))
+                 (dataframe-column-ref students2 'name))
                 '("Eve" "Alice" "Bob"))
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'is-teenager))
+                 (dataframe-column-ref students2 'is-teenager))
                 '(#t #t #f)))

@@ -6,8 +6,8 @@
 
 (provide (for-space qi where))
 
-(define-qi-syntax-rule (where (series-name:id ...) flo)
+(define-qi-syntax-rule (where (col-name:id ...) flo)
   (esc (λ (df)
          (define pred?
-           (dataframe-series-lift df '(series-name ...) (flow flo)))
+           (dataframe-column-lift df '(col-name ...) (flow flo)))
          (dataframe-select df pred?))))

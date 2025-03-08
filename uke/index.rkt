@@ -103,7 +103,7 @@
        (let ([s (linear-index-stride idx)])
          (or (= 1 s) (= 0 s)))))
 
-;; XXX in-indices should probably work on indexes, series, and
+;; XXX in-indices should probably work on indexes, columns, and
 ;;     dataframes (better ergonomics)
 ;; XXX this name is bad
 (define in-indices-sequence

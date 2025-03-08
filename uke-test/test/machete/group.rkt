@@ -13,7 +13,7 @@
          [is-teenager (age) (and (< 12 _) (< _ 20))])
         (group (is-teenager)
                #:aggregate
-               (~> (dataframe-series-ref 'name)
+               (~> (dataframe-column-ref 'name)
                    sequence->list))))
 
   (check-match
@@ -34,7 +34,7 @@
                        'teenager
                        'not-teenager))
                #:aggregate
-               (~> (dataframe-series-ref 'name)
+               (~> (dataframe-column-ref 'name)
                    sequence->list))))
 
   (check-match
@@ -46,7 +46,7 @@
     (list 'teenager '("Alice" "Eve"))
     (list 'not-teenager '("Bob")))))
 
-(test-case "group - students - derive key from series vals"
+(test-case "group - students - derive key from column vals"
   (define students2
     (~> (students)
         (group (age)
@@ -55,7 +55,7 @@
                    'teenager
                    'not-teenager)
                #:aggregate
-               (~> (dataframe-series-ref 'name)
+               (~> (dataframe-column-ref 'name)
                    sequence->list))))
 
   (check-match

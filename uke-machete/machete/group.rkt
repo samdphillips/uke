@@ -8,7 +8,7 @@
 (provide (for-space qi group))
 
 (define-qi-syntax-parser group
-  [(_group (series-names:id ...)
+  [(_group (col-names:id ...)
            {~optional {~seq #:key key-flo}
                       #:defaults
                       ([key-flo #'collect])}
@@ -16,7 +16,7 @@
                       #:defaults
                       ([aggr-flo #'values])})
    #'(group #:key
-            (~> (-< (dataframe-cell-ref _ 'series-names _) ...) key-flo)
+            (~> (-< (dataframe-cell-ref _ 'col-names _) ...) key-flo)
             #:aggregate aggr-flo)]
   [(_group #:key key-flo
            {~optional {~seq #:aggregate aggr-flo}

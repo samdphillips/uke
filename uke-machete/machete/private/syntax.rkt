@@ -10,9 +10,9 @@
 
 (define-syntax-class create-column-spec
   (pattern [name:id {~seq property:keyword property-expr} ...
-                    (in-series-name:id ...) flo]
-    #:attr (in-series-var 1)
-    (generate-temporaries #'(in-series-name ...))
+                    (in-col-name:id ...) flo]
+    #:attr (in-col-var 1)
+    (generate-temporaries #'(in-col-name ...))
     #:attr vec-id  (format-id #'name "~a-store" #'name)
     #:attr flow-id (format-id #'name "~a-flow" #'name)
     #:attr flow    #'(flow flo)))

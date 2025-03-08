@@ -13,7 +13,7 @@
         (where (age) (and (< 12 _) (< _ 20)))))
   (check-equal? (dataframe-num-rows students2) 2)
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'name))
+                 (dataframe-column-ref students2 'name))
                 '("Alice" "Eve")))
 
 (test-case "where - students - rearranged"
@@ -23,5 +23,5 @@
         (where (age) (and (< 12 _) (< _ 20)))))
   (check-equal? (dataframe-num-rows students2) 2)
   (check-equal? (sequence->list
-                 (dataframe-series-ref students2 'name))
+                 (dataframe-column-ref students2 'name))
                 '("Eve" "Alice")))

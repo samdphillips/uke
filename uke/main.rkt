@@ -1,11 +1,11 @@
 #lang racket/base
 
-(require uke/dataframe
+(require uke/column
+         uke/dataframe
          uke/error
-         uke/index
-         uke/series)
+         uke/index)
 
-(provide (all-from-out uke/dataframe
+(provide (all-from-out uke/column
+                       uke/dataframe
                        uke/error
-                       uke/index
-                       uke/series))
+                       uke/index))
