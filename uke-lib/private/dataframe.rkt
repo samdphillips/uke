@@ -40,13 +40,6 @@
 
 (struct dataframe (index column*) #:transparent)
 
-;; XXX: actually compute a compatible index
-;; XXX: move to index.rkt
-;; XXX: this actually make a really wrong index for a slice
-#;
-(define (compatible-index a-series-list)
-  (column-index (car a-series-list)))
-
 (define (make-dataframe col-list
                         #:index an-index)
   (check-index-compatible* 'make-dataframe
