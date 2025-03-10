@@ -3,7 +3,7 @@
 (require racket/sequence
          rackunit
          uke/index
-         (submod uke/index for-test))
+         (submod uke/private/index for-test))
 
 (test-case "linear identity index"
   (define idx (make-linear-index 10))

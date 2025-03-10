@@ -5,8 +5,7 @@
          racket/unsafe/ops
          uke/column
          uke/dataframe
-         uke/index
-         uke/util)
+         uke/index)
 
 (provide csv->dataframe)
 

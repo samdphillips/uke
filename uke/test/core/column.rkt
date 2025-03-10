@@ -5,7 +5,7 @@
          uke/column
          uke/error
          uke/index
-         (submod uke/index for-test))
+         (submod uke/private/index for-test))
 
 ;; There are 2**3 combinations of arguments for `vector->column`.  The cases are enumerated
 ;; +----- default offset / offset
