@@ -1,6 +1,6 @@
 #lang info
 
-(define name "uke-test")
+(define name "uke")
 (define collection "uke")
 (define version "0.1")
 (define deps '("base" "uke" "uke-machete"))
