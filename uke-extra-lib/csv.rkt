@@ -13,7 +13,16 @@
                         [reader-spec null]
                         #:column-names [col-names 'first])
   (define next-row (make-csv-reader inp reader-spec))
-  (define (make-producer) (in-producer next-row null?))
+  (define (list->vector* vs)
+    (unsafe-vector*->immutable-vector!
+     (list->vector vs)))
+  (define (make-producer)
+    (in-producer (λ ()
+                   (define vs (next-row))
+                   (if (null? vs)
+                       vs
+                       (list->vector* vs)))
+                 null?))
   (define-values (names rows)
     (cond
       [(eq? 'first col-names)
@@ -21,11 +30,11 @@
       [(not col-names)
        (define first (next-row))
        (values (map (λ (v) (gensym 'column-)) first)
-               (sequence-append (list first)
+               (sequence-append (list (list->vector* first))
                                 (make-producer)))]
       [(list? col-names)
        (values col-names (make-producer))]))
-  (define ((col-ref i) v) (list-ref v i))
+  (define ((col-ref i) v) (vector-ref v i))
   (define store
     (unsafe-vector*->immutable-vector!
      (for/vector ([r rows]) r)))
