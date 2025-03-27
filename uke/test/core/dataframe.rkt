@@ -75,9 +75,9 @@
   (define students2
     (dataframe-select students
                       (dataframe-column-lift students
-                                             '(age)
                                              (λ (age)
-                                               (and (< 12 age) (< age 20))))))
+                                               (and (< 12 age) (< age 20)))
+                                             'age)))
   (check-equal? (sequence->list (dataframe-column-ref students2 'name))
                 '("Alice" "Eve")))
 
@@ -86,30 +86,14 @@
     (let ([df (dataframe-reverse-rows students)])
       (dataframe-select df
                         (dataframe-column-lift
-                         df '(age) (λ (age)
-                                     (and (< 12 age) (< age 20)))))))
+                         df (λ (age) (and (< 12 age) (< age 20)))
+                         'age))))
   (check-equal? (sequence->list (dataframe-column-ref students2 'name))
                 '("Eve" "Alice")))
 
-(test-case "dataframe-column-lift - linear - macro"
+(test-case "dataframe-column-lift - linear"
   (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
-  (define f (dataframe-column-lift df0 '(a b) list))
-  (define tbl
-    (for/list ([i (in-indices (dataframe-index df0))]) (f i)))
-  (check-equal? tbl '((0 0) (1 2) (2 4))))
-
-(test-case "dataframe-column-lift - linear reversed - macro"
-  (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
-  (define df1 (dataframe-reverse-rows df0))
-  (define f (dataframe-column-lift df1 '(a b) list))
-  (define tbl
-    (for/list ([i (in-indices (dataframe-index df1))]) (f i)))
-  (check-equal? tbl '((2 4) (1 2) (0 0))))
-
-(test-case "dataframe-column-lift - linear - procedural"
-  (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
-  (define cols '(a b))
-  (define f (dataframe-column-lift df0 cols list))
+  (define f (dataframe-column-lift df0 list 'a 'b))
   (define tbl
     (for/list ([i (in-indices (dataframe-index df0))]) (f i)))
   (check-equal? tbl '((0 0) (1 2) (2 4))))
@@ -125,7 +109,7 @@
                   dataframe-reverse-rows))
 
   (define df2
-    (let* ([f (dataframe-column-lift df1 '(y) values)]
+    (let* ([f (dataframe-column-lift df1 values 'y)]
            [lt? (λ (i j) (< (f i) (f j)))])
       (dataframe-index-update df1
                               (λ (idx)
@@ -135,11 +119,10 @@
   (check-equal? (sequence->list (dataframe-column-ref df2 'x))
                 '(1 3 5 7 9)))
 
-(test-case "dataframe-column-lift - linear reversed  - procedural"
+(test-case "dataframe-column-lift - linear reversed"
   (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
   (define df1 (dataframe-reverse-rows df0))
-  (define cols '(a b))
-  (define f (dataframe-column-lift df1 cols list))
+  (define f (dataframe-column-lift df1 list 'a 'b))
   (define tbl
     (for/list ([i (in-indices (dataframe-index df1))]) (f i)))
   (check-equal? tbl '((2 4) (1 2) (0 0))))
@@ -147,7 +130,7 @@
 (test-case "dataframe-group-index"
   (define groups
     (dataframe-group-index students
-                           (dataframe-column-lift students '(name) values)))
+                           (dataframe-column-lift students values 'name)))
   (check-equal? groups (hash "Bob" (list 0)
                              "Alice" (list 1)
                              "Eve" (list 2))))
@@ -155,8 +138,8 @@
 (test-case "dataframe-left-join"
   (define df-joined
     (dataframe-left-join
-     students (dataframe-column-lift students '(name age) list) null
-     gradebook (dataframe-column-lift gradebook '(name age) list) '(name age)))
+     students (dataframe-column-lift students list 'name 'age) null
+     gradebook (dataframe-column-lift gradebook list 'name 'age) '(name age)))
   ;; XXX: better checks
   (check-equal? (dataframe-num-rows df-joined) 3)
   (check-equal? (length (dataframe-column* df-joined)) 9))

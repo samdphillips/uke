@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base)
+(require (for-syntax racket/base
+                     racket/syntax)
          racket/unsafe/ops
          syntax/parse/define
 
@@ -98,9 +99,42 @@
                          (lambda (s)
                            (column-push-index s (dataframe-index df)))))
 
-(define ~dataframe-column-lift
-  (procedure-rename
-   (lambda (df col-names f)
+(define-syntax-parse-rule (generate-column-lift df:id
+                                                combine:id
+                                                col-names:id ...)
+  #:with (col ...) (generate-temporaries #'(col-names ...))
+  (let ()
+    (define idx (dataframe-index df))
+    ;; XXX better error for missing column names
+    (define col (dataframe-column*-ref df col-names)) ...
+    (λ (i) (combine (dataframe-cell-ref* idx col i) ...))))
+
+(define-syntax-parse-rule (generate-column-lifts n:nat)
+  #:with (procs ...)
+  (for/list ([i (syntax->datum #'n)])
+    (define col-names (for/list ([v (add1 i)]) (generate-temporary 'col-name)))
+    #`(lambda (df combine #,@col-names)
+        (generate-column-lift df combine #,@col-names)))
+  (values procs ...))
+
+(define-values
+  (dataframe-column-lift1
+   dataframe-column-lift2
+   dataframe-column-lift3
+   dataframe-column-lift4)
+  (generate-column-lifts 4))
+
+(define dataframe-column-lift
+  (case-lambda
+    [(df combine cname1)
+     (dataframe-column-lift1 df combine cname1)]
+    [(df combine cname1 cname2)
+     (dataframe-column-lift2 df combine cname1 cname2)]
+    [(df combine cname1 cname2 cname3)
+     (dataframe-column-lift3 df combine cname1 cname2 cname3)]
+    [(df combine cname1 cname2 cname3 cname4)
+     (dataframe-column-lift4 df combine cname1 cname2 cname3 cname4)]
+    [(df combine . col-names)
      (define idx (dataframe-index df))
      ;; XXX better error for missing column names
      (define refs
@@ -108,25 +142,7 @@
          (define s (dataframe-column*-ref df n))
          (λ (i) (dataframe-cell-ref* idx s i))))
      (λ (i)
-       (apply f (for/list ([ref (in-list refs)]) (ref i)))))
-   'dataframe-column-lift))
-
-(define-syntax dataframe-column-lift
-  (syntax-parser
-    #:literals (quote)
-    [(_ df-expr '(col-names:id ...) proc)
-     #:declare df-expr (expr/c #'dataframe?)
-     #:with (col ...) (generate-temporaries #'(col-names ...))
-     #'(let ()
-         (define df df-expr.c)
-         (define idx (dataframe-index df))
-         ;; XXX better error for missing column names
-         (define col (dataframe-column*-ref df 'col-names))
-         ...
-         (λ (i)
-           (proc (dataframe-cell-ref* idx col i) ...)))]
-    [_:id #'~dataframe-column-lift]
-    [(_ . rest) #'(~dataframe-column-lift . rest)]))
+       (apply combine (for/list ([ref (in-list refs)]) (ref i))))]))
 
 (define (dataframe-add-column* df . cols-to-add)
   (define df-idx (dataframe-index df))
