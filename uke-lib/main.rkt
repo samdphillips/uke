@@ -3,9 +3,11 @@
 (require uke/column
          uke/dataframe
          uke/error
-         uke/index)
+         uke/index
+         uke/store)
 
 (provide (all-from-out uke/column
                        uke/dataframe
                        uke/error
-                       uke/index))
+                       uke/index
+                       uke/store))
