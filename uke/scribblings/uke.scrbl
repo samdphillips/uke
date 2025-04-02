@@ -324,3 +324,4 @@ ss
                @defstruct[(uke:exn:column uke:exn) [] #:omit-constructor]
                @defstruct[(uke:exn:index uke:exn) [] #:omit-constructor])]
 
+@include-section["changelog.scrbl"]
