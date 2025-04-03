@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'uke/scribblings/**'
+      - '.github/workflows/docs.yml'
+jobs:
+  publish:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+    - name: install racket
+      uses: Bogdanp/setup-racket@v1.11
+      with:
+        architecture: 'x64'
+        distribution: 'full'
+        variant: 'CS'
+        version: 'stable'
+    - name: install base package
+      run: raco pkg install --batch --auto ./uke ./uke-lib ./uke-extra-lib ./uke-machete
+    - name: build docs
+      run: scribble +m --redirect-main http://pkg-build.racket-lang.org/doc/ --htmls --dest ./docs ./uke/scribblings/uke.scrbl
+    - name: push to gh-pages
+      uses: JamesIves/github-pages-deploy-action@v4.7.3
+      with:
+        folder: docs/uke
+        branch: gh-pages
