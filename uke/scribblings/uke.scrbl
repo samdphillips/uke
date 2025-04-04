@@ -1,7 +1,8 @@
 #lang scribble/manual
 
 @(require (for-label racket
-                     uke))
+                     uke
+                     uke/machete))
 
 @title{uke}
 @author[(author+email "Sam Phillips" "samdphillips@gmail.com")]
@@ -13,7 +14,6 @@
                  (link x x)).})
 
 @section{Reference}
-
 @defmodule[uke #:no-declare]
 
 Contains all bindings from @racketmodname[uke/dataframe],
@@ -100,7 +100,7 @@ Contains all bindings from @racketmodname[uke/dataframe],
                               [keyr (-> nonnegative-integer? any/c)]
                               [remover (listof symbol?)])
          dataframe?]
-ss
+
 @defproc[(dataframe-cell-ref [df dataframe?]
                              [col-name symbol?]
                              [i nonnegative-integer?]) any/c]
@@ -320,8 +320,50 @@ ss
 @declare-exporting[uke/error uke #:packages ("uke-lib")]
 
 @deftogether[(@defstruct[(uke:exn exn:fail) [] #:omit-constructor]
-               @defstruct[(uke:exn:dataframe uke:exn) [] #:omit-constructor]
-               @defstruct[(uke:exn:column uke:exn) [] #:omit-constructor]
-               @defstruct[(uke:exn:index uke:exn) [] #:omit-constructor])]
+              @defstruct[(uke:exn:dataframe uke:exn) [] #:omit-constructor]
+              @defstruct[(uke:exn:column uke:exn) [] #:omit-constructor]
+              @defstruct[(uke:exn:index uke:exn) [] #:omit-constructor])]
+
+@subsection{Machete}
+@defmodule[uke/machete]
+
+@defform[#:kind "qi syntax"
+         (create [column-name column-property ...
+                  (input-column-names ...) flo] ...)
+         #:grammar [(column-property (code:line property-name property-value))]]
+
+@defform*[#:kind "qi syntax"
+          [(group (column-name ...+) maybe-key-flow maybe-aggregate-flow)
+           (group #:key key-flow maybe-aggregate-flow)]
+
+          #:grammar [(maybe-key-flow (code:line)
+                                     (code:line #:key key-flow))
+                     (maybe-aggregate-flow (code:line)
+                                           (code:line
+                                            #:aggregate aggregate-flow))]]
+
+@defform[#:kind "qi syntax"
+         (where (column-name ...+) select-flow)]
+
+@defform[#:kind "qi syntax"
+         #:literals (everything or and not)
+         (slice slice-spec)
+         #:grammar [(slice-spec everything
+                                id
+                                str
+                                regexp
+                                (or slice-spec ...+)
+                                (and slice-spec ...+)
+                                (not slice-spec))]]
+
+@defproc[(show [df dataframe?]
+               [#:nrows nrows nonnegative-integer? 10]
+               [#:widths widths (listof nonnegative-integer?) null])
+         any/c]
+
+
+
+
+
 
 @include-section["changelog.scrbl"]
