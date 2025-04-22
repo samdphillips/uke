@@ -329,7 +329,7 @@ Contains all bindings from @racketmodname[uke/dataframe],
 
 @defform[#:kind "qi syntax"
          (create [column-name column-property ...
-                  (input-column-names ...) flo] ...)
+                  (input-column-names ...) flow] ...)
          #:grammar [(column-property (code:line property-name property-value))]]
 
 @defform*[#:kind "qi syntax"
