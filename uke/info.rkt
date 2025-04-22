@@ -7,3 +7,4 @@
 (define build-deps '("scribble-lib" "racket-doc"))
 (define pkg-authors '(samdphillips@gmail.com))
 (define scribblings '(("scribblings/uke.scrbl" ())))
+(define license 'Apache-2.0)
