@@ -361,9 +361,4 @@ Contains all bindings from @racketmodname[uke/dataframe],
                [#:widths widths (listof nonnegative-integer?) null])
          any/c]
 
-
-
-
-
-
 @include-section["changelog.scrbl"]
