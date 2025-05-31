@@ -106,7 +106,7 @@ Contains all bindings from @racketmodname[uke/dataframe],
                              [i nonnegative-integer?]) any/c]
 
 @defproc[(dataframe-cell-ref* [df-index index?]
-                              [col-name symbol?]
+                              [col column?]
                               [i nonnegative-integer?]) any/c]
 
 @deftogether[
