@@ -141,12 +141,44 @@
   (define n (index-size idx))
   (index-compose idx (make-linear-index n (sub1 n) -1)))
 
-(define (index-sort idx lt?)
+(module* for-bench #f
+  (provide index-sort/list
+           index-sort/heap
+           index-sort/vector))
+
+(require data/heap)
+
+(define (index-sort/heap idx lt?)
+  (define heap
+    (let ([heap (make-heap lt?)])
+      (for ([i (in-indices idx)]) (heap-add! heap i))
+      heap))
+  (define vec
+    (unsafe-vector*->immutable-vector!
+     (for/vector #:length (index-size idx)
+       ([i (in-heap/consume! heap)])
+       i)))
+  (make-vector-index vec))
+
+(define (index-sort/list idx lt?)
   (define i* (sort (sequence->list (in-indices idx)) lt?))
   (define vec
     (unsafe-vector*->immutable-vector!
      (for/vector ([i (in-list i*)]) (index-ref idx i))))
   (make-vector-index vec))
+
+(define index-sort index-sort/list)
+
+(define (index-sort/vector idx lt?)
+  (define iv
+    (cond
+      [(linear-index? idx) (build-vector (index-size idx) values)]
+      [(vector-index? idx) (vector-copy (vector-index-mapping idx))]
+      [else
+       (error 'index-sort "unknown index type: ~s" idx)]))
+  (vector-sort! iv lt?)
+  (make-vector-index
+   (unsafe-vector*->immutable-vector! iv)))
 
 (define (do-generic-index-compose i0 i1)
   (define vec (make-vector (index-size i1)))
