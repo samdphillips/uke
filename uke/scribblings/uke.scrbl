@@ -40,6 +40,8 @@ Contains all bindings from @racketmodname[uke/dataframe],
           [update/f (-> (listof column?) (listof column?))])
          dataframe?]
 
+@defproc[(dataframe-column-names [df dataframe?]) (listof? symbol?)]
+
 @defproc[(dataframe-columns [df dataframe?]) (listof column?)]
 
 @defproc[(dataframe-column-ref [df dataframe?]

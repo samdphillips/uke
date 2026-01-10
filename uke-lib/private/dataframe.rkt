@@ -14,6 +14,7 @@
          dataframe-num-rows
          dataframe-index-update
          dataframe-column*-update
+         dataframe-column-names
          dataframe-columns
          dataframe-column-ref
          dataframe-column*-ref
@@ -62,6 +63,10 @@
   (define an-index (dataframe-index a-dataframe))
   (for/list ([col (in-list (dataframe-column* a-dataframe))])
     (column-push-index col an-index)))
+
+(define (dataframe-column-names a-dataframe)
+  (for/list ([col (in-list (dataframe-column* a-dataframe))])
+    (column-name col)))
 
 (define (dataframe-column-ref-failure who col-name)
   (lambda ()
