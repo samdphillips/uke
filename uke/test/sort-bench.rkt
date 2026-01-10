@@ -8,20 +8,6 @@
          (submod uke/private/index for-bench)
          uke/machete)
 
-(define (do-index-update df index-sort)
-  (define f (dataframe-column-lift df values 'x))
-  (define (lt? a b) (< (f a) (f b)))
-  (define kind
-    (match (dataframe-index df)
-      [(? linear-index?) 'lin]
-      [(? vector-index?) 'vec]))
-  (collect-garbage)
-  (collect-garbage)
-  (collect-garbage)
-  (λ (idx)
-    (display (~a "[" kind "]: "))
-    (time (index-sort idx lt?))))
-
 (define (make-df-linear size)
   (for/dataframe (x) ([i (in-range size)]) (random)))
 
@@ -38,28 +24,45 @@
 (define make-df* (list make-df-linear make-df-vector))
 (define index-sort* (list index-sort/list index-sort/heap index-sort/vector))
 
-(for* ([index-sort (in-list index-sort*)]
-       [size (in-list '(10000 100000 500000))]
-       #:do [(displayln (~a "=== " (object-name index-sort) " / " size " ==="))]
-       [make-df (in-list make-df*)])
-  (define df (make-df size))
-  (dataframe-index-update df (do-index-update df index-sort)))
+(define (~csv vs)
+  (apply ~a #:separator "," vs))
 
-#|
+(define (write-csv df outp)
+  (define columns (dataframe-columns df))
+  (displayln
+   (~csv (for/list ([col (in-list columns)]) (column-name col)))
+   outp)
+  (for ([i (in-indices (dataframe-index df))])
+    (displayln
+     (~csv (for/list ([col (in-list columns)]) (column-ref col i)))
+     outp)))
 
-;; df0 is a linear index
-
-(define df1
-  (dataframe-index-update df0 (do-index-update df0 'lin index-sort/list)))
-
-(define df2
-  (dataframe-index-update df0 (do-index-update df0 'lin index-sort/heap)))
-
-;; df2 is a vector index
-
-(define df3
-  (dataframe-index-update df2 (do-index-update df2 'vec index-sort/list)))
-
-(define df4
-  (dataframe-index-update df2 (do-index-update df2 'vec index-sort/heap)))
-|#
+(call-with-output-file #:exists 'replace "sort-bench.csv"
+  (λ (outp)
+    (write-csv
+     (for*/dataframe (sort index-type size real-time cpu-time gc-time)
+       ([index-sort (in-list index-sort*)]
+        [size (in-list '(10000 100000 500000 1000000))]
+        #:do [(displayln (~a #:separator " / "
+                             (object-name index-sort)
+                             size))]
+        [make-df (in-list make-df*)]
+        [trials 6])
+       (define df (make-df size))
+       (define idx (dataframe-index df))
+       (define f (dataframe-column-lift df values 'x))
+       (define (lt? a b) (< (f a) (f b)))
+       (collect-garbage)
+       (collect-garbage)
+       (collect-garbage)
+       (define-values (_result cpu-time real-time gc-time)
+         (time-apply index-sort (list idx lt?)))
+       (values (object-name index-sort)
+               (match idx
+                 [(? linear-index?) 'lin]
+                 [(? vector-index?) 'vec])
+               size
+               real-time
+               cpu-time
+               gc-time))
+     outp)))
