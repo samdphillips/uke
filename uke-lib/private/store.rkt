@@ -14,5 +14,5 @@
 (define store-ref vector-ref)
 (define store-copy vector-copy)
 
-(define (store-append s0 s1)
-  (vector-append s0 s1))
+(define (store-append st0 st1)
+  (vector-append st0 st1))

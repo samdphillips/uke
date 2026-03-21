@@ -55,13 +55,13 @@
   (unless (and (<= 0 i) (< i (index-size idx)))
     (raise-uke-error exn:uke:index who "index out of range for index: ~a" i)))
 
-(define (check-index-compatible who i0 i1)
-  (unless (<= (index-max-range i0) (index-size i1))
+(define (check-index-compatible who idx0 idx1)
+  (unless (<= (index-max-range idx0) (index-size idx1))
     (raise-uke-error exn:uke:index
                      who
                      "indexes incompatible: range ~a > size ~a"
-                     (index-max-range i0)
-                     (index-size i1))))
+                     (index-max-range idx0)
+                     (index-size idx1))))
 
 (define (check-index-compatible* who idx idx*)
   (for ([i (in-list idx*)])
@@ -81,13 +81,14 @@
 ;;     only copy relevant part of index instead of recalculating the table.
 (define index-compose
   (case-lambda
-    [(i0 i1)
-     (check-index-compatible 'index-compose i1 i0)
+    [(idx0 idx1)
+     (check-index-compatible 'index-compose idx1 idx0)
      (cond
-       [(get-index-op i0 2) => (λ (f) (f i0 i1))]
-       [else (generic-index-compose i0 i1)])]
-    [(i0 i1 . rest)
-     (apply index-compose (index-compose i0 i1) rest)]))
+       [(get-index-op idx0 2) => (λ (f) (f idx0 idx1))]
+       [else (generic-index-compose idx0 idx1)])]
+    ;; XXX: in current code base this only seems to go to 3 arguments
+    [(idx0 idx1 . rest-idx)
+     (apply index-compose (index-compose idx0 idx1) rest-idx)]))
 
 (define (index-max-range idx)
   (if (zero? (index-size idx))
@@ -148,21 +149,21 @@
      (for/vector ([i (in-list i*)]) (index-ref idx i))))
   (make-vector-index vec))
 
-(define (do-generic-index-compose i0 i1)
-  (define vec (make-vector (index-size i1)))
+(define (do-generic-index-compose idx0 idx1)
+  (define vec (make-vector (index-size idx1)))
   (for/fold ([max-range -1] #:result (values max-range vec))
-            ([i (in-indices i1)])
-    (define v (index-ref i0 (index-ref i1 i)))
+            ([i (in-indices idx1)])
+    (define v (index-ref idx0 (index-ref idx1 i)))
     (vector-set! vec i v)
     (max max-range v)))
 
-(define (generic-index-compose i0 i1)
+(define (generic-index-compose idx0 idx1)
   ;; XXX: small indexes (size 0-2) could trivially be converted to
   ;;     linear-indexes, but this optimization probably wouldn't occur much in
   ;;     practice.
   ;; do-generic-index-compose must return a fresh vector
   (define-values (max-range vec)
-    (do-generic-index-compose i0 i1))
+    (do-generic-index-compose idx0 idx1))
   (vector-index max-range
                 (unsafe-vector*->immutable-vector! vec)))
 
@@ -171,21 +172,21 @@
   (+ (linear-index-offset idx)
      (* (linear-index-stride idx) i)))
 
-(define (do-linear-index-compose i0 i1)
-  (define o0 (linear-index-offset i0))
-  (define s0 (linear-index-stride i0))
-  (define o1 (linear-index-offset i1))
-  (define s1 (linear-index-stride i1))
-  (values (index-size i1)
+(define (do-linear-index-compose idx0 idx1)
+  (define o0 (linear-index-offset idx0))
+  (define s0 (linear-index-stride idx0))
+  (define o1 (linear-index-offset idx1))
+  (define s1 (linear-index-stride idx1))
+  (values (index-size idx1)
           (+ o0 (* s0 o1))
           (* s0 s1)))
 
-(define (linear-index-compose i0 i1)
+(define (linear-index-compose idx0 idx1)
   (cond
-    [(not (linear-index? i1)) (generic-index-compose i0 i1)]
+    [(not (linear-index? idx1)) (generic-index-compose idx0 idx1)]
     [else
      (call-with-values
-      (λ () (do-linear-index-compose i0 i1))
+      (λ () (do-linear-index-compose idx0 idx1))
       make-linear-index)]))
 
 (define (linear-index-max-range idx)
