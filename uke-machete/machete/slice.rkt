@@ -7,7 +7,7 @@
 
 (provide (for-space qi slice))
 
-;; XXX: simple support for something like dataframe-reorder-column, maybe a
+;; XXX: simple support for something like dataframe-reorder-columns, maybe a
 ;;      different reorder operator
 (define-qi-syntax-rule (slice s:slice-spec)
   (esc (λ (df)

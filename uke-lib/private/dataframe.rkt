@@ -21,7 +21,7 @@
          dataframe-column-lift
          dataframe-add-column*
          dataframe-remove-column*
-         dataframe-reorder-column
+         dataframe-reorder-columns
          dataframe-reverse-rows
          dataframe-compact?
          dataframe-compact
@@ -59,13 +59,13 @@
 (define (dataframe-num-rows df)
   (index-size (dataframe-index df)))
 
-(define (dataframe-columns a-dataframe)
-  (define an-index (dataframe-index a-dataframe))
-  (for/list ([col (in-list (dataframe-column* a-dataframe))])
-    (column-push-index col an-index)))
+(define (dataframe-columns df)
+  (define idx (dataframe-index df))
+  (for/list ([col (in-list (dataframe-column* df))])
+    (column-push-index col idx)))
 
-(define (dataframe-column-names a-dataframe)
-  (for/list ([col (in-list (dataframe-column* a-dataframe))])
+(define (dataframe-column-names df)
+  (for/list ([col (in-list (dataframe-column* df))])
     (column-name col)))
 
 (define (dataframe-column-ref-failure who col-name)
@@ -83,12 +83,12 @@
                                  'dataframe-column*-ref
                                  col-name)]
                                [success-result values])
-  (define found
+  (define found-col
     (for/first ([col (in-list (dataframe-column* df))]
                 #:when (equal? (column-name col) col-name))
       col))
   (cond
-    [found => success-result]
+    [found-col => success-result]
     [(procedure? failure-result) (failure-result)]
     [else failure-result]))
 
@@ -131,14 +131,14 @@
 
 (define dataframe-column-lift
   (case-lambda
-    [(df combine cname1)
-     (dataframe-column-lift1 df combine cname1)]
-    [(df combine cname1 cname2)
-     (dataframe-column-lift2 df combine cname1 cname2)]
-    [(df combine cname1 cname2 cname3)
-     (dataframe-column-lift3 df combine cname1 cname2 cname3)]
-    [(df combine cname1 cname2 cname3 cname4)
-     (dataframe-column-lift4 df combine cname1 cname2 cname3 cname4)]
+    [(df combine col-name1)
+     (dataframe-column-lift1 df combine col-name1)]
+    [(df combine col-name1 col-name2)
+     (dataframe-column-lift2 df combine col-name1 col-name2)]
+    [(df combine col-name1 col-name2 col-name3)
+     (dataframe-column-lift3 df combine col-name1 col-name2 col-name3)]
+    [(df combine col-name1 col-name2 col-name3 col-name4)
+     (dataframe-column-lift4 df combine col-name1 col-name2 col-name3 col-name4)]
     [(df combine . col-names)
      (define idx (dataframe-index df))
      ;; XXX better error for missing column names
@@ -149,28 +149,29 @@
      (λ (i)
        (apply combine (for/list ([ref (in-list refs)]) (ref i))))]))
 
-(define (dataframe-add-column* df . cols-to-add)
+(define (dataframe-add-column* df . add-cols)
   (define df-idx (dataframe-index df))
-  (define col*
+  (define df-cols
     ;; XXX: same as dataframe-column
     (for/list ([col (in-list (dataframe-column* df))])
       (column-push-index col df-idx)))
   ;; XXX: this can just be make-dataframe
   (struct-copy dataframe df
                [index   (make-linear-index (index-size df-idx))]
-               [column* (append col* cols-to-add)]))
+               [column* (append df-cols add-cols)]))
 
-(define (dataframe-remove-column* df . col-names)
-  (define col*
+(define (dataframe-remove-column* df . remove-cols)
+  (define new-cols
     (for/list ([col (in-list (dataframe-column* df))]
-               #:unless (memq (column-name col) col-names))
+               #:unless (memq (column-name col) remove-cols))
       col))
-  (struct-copy dataframe df [column* col*]))
+  ;; XXX: dataframe-column*-update
+  (struct-copy dataframe df [column* new-cols]))
 
 ;; XXX: dataframe-rename-column
 
 ;; XXX: this looks weird
-(define (dataframe-reorder-column df col-names)
+(define (dataframe-reorder-columns df col-names)
   (define col*
     (for/list ([name (in-list col-names)])
       (dataframe-column-ref df name)))
@@ -206,8 +207,8 @@
                (index-size (dataframe-index df))))]))
 
 (define (dataframe-select df pred?)
-  (define (select idx0)
-    (index-select idx0 pred?))
+  (define (select idx)
+    (index-select idx pred?))
   (dataframe-index-update df select))
 
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
@@ -223,36 +224,38 @@
   (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
     (define group-df
       (dataframe-index-update df (λ (idx) (index-pick idx g))))
+    ;; XXX: short-cut here, instead of making a new dataframe and index the
+    ;;      aggr-func takes original dataframe and list of indices
     (values k (aggr-func group-df))))
 
-(define (dataframe-left-join dfl keyl removel
-                             dfr keyr remover)
-  (define groupl (dataframe-group-index dfl keyl))
-  (define groupr (dataframe-group-index dfr keyr))
+(define (dataframe-left-join left-df left-key-func left-remove-names
+                             right-df right-key-func right-remove-names)
+  (define group-left (dataframe-group-index left-df left-key-func))
+  (define group-right (dataframe-group-index right-df right-key-func))
 
-  (define (list->index dfi vs)
-    (index-compose dfi (make-vector-index (list->vector (reverse vs)))))
-  (define (make-new-column df remove-columns join-index)
-    (define dfi (dataframe-index df))
+  (define (list->index df-idx vs)
+    (index-compose df-idx (make-vector-index (list->vector (reverse vs)))))
+  (define (make-new-column df remove-column-names join-index)
+    (define df-idx (dataframe-index df))
     (for/list ([s (in-list (dataframe-column* df))]
-               #:unless (member (column-name s) remove-columns))
-      (column-index-update s (λ (idx) (index-compose idx dfi join-index)))))
-  (define-values (il ir)
-    (for*/fold ([il null]
-                [ir null]
+               #:unless (member (column-name s) remove-column-names))
+      (column-index-update s (λ (idx) (index-compose idx df-idx join-index)))))
+  (define-values (left-idx right-idx)
+    (for*/fold ([left-indices null]
+                [right-indices null]
                 #:result
-                (values (list->index (dataframe-index dfl) il)
-                        (list->index (dataframe-index dfr) ir)))
-               ([(g i*) (in-immutable-hash groupl)]
-                #:do [(define j* (hash-ref groupr g '(-1)))]
+                (values (list->index (dataframe-index left-df) left-indices)
+                        (list->index (dataframe-index right-df) right-indices)))
+               ([(g i*) (in-immutable-hash group-left)]
+                #:do [(define j* (hash-ref group-right g '(-1)))]
                 [i (in-list i*)]
                 [j (in-list j*)])
-      (values (cons i il) (cons j ir))))
+      (values (cons i left-indices) (cons j right-indices))))
   (make-dataframe
-   #:index (make-linear-index (index-size il))
+   #:index (make-linear-index (index-size left-idx))
    (append
-    (make-new-column dfl removel il)
-    (make-new-column dfr remover ir))))
+    (make-new-column left-df left-remove-names left-idx)
+    (make-new-column right-df right-remove-names right-idx))))
 
 (define (dataframe-cell-ref df col-name i)
   (define j (index-ref (dataframe-index df) i))
@@ -280,14 +283,14 @@
        #:with _for/fold for-stx
        #'(let ()
            (define init-rows 16)
-           (define (build store size)
+           (define (build st size)
              ;; XXX: make store immutable
              (define col-v
                (make-column 'col
                             (make-linear-index size ks stride)
                             #:properties
                             (hash {~@ 'col.prop-name col.prop-expr} ...)
-                            store))
+                            st))
              ...
              (make-dataframe #:index (make-linear-index size)
                              (list col-v ...)))

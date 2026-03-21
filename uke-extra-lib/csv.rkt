@@ -51,7 +51,7 @@
                       " expected-count: ~a\n"
                       " row: ~s")
                      ncols v)]))])))
-  (define ((col-ref i) v) (vector-ref v i))
+  (define ((col-ref i) vec) (vector-ref vec i))
   (define store
     (unsafe-vector*->immutable-vector!
      (for/vector ([r rows] #:when (check-column-mismatch r)) r)))

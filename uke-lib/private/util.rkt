@@ -27,6 +27,5 @@
        (values null 0)]))
   (loop))
 
-(define (vector-valid-position? a-vector pos)
-  (and (<= 0 pos) (< pos (vector-length a-vector))))
-
+(define (vector-valid-position? vec pos)
+  (and (<= 0 pos) (< pos (vector-length vec))))

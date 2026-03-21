@@ -56,20 +56,20 @@
 (define (column-size col)
   (index-size (column-index col)))
 
-(define (column=? s1 s2)
-  (and (= (column-size s1) (column-size s2))
-       (equal? (column-name s1) (column-name s2))
-       (for/and ([i (in-indices (column-index s1))])
-         (equal? (column-ref s1 i)
-                 (column-ref s2 i)))))
+(define (column=? col1 col2)
+  (and (= (column-size col1) (column-size col2))
+       (equal? (column-name col1) (column-name col2))
+       (for/and ([i (in-indices (column-index col1))])
+         (equal? (column-ref col1 i)
+                 (column-ref col2 i)))))
 
-(define (column*=? idx1 s1 idx2 s2)
-  (define ((make-ref idx s) i)
-    (column-ref s (index-ref idx i)))
-  (define ref1 (make-ref idx1 s1))
-  (define ref2 (make-ref idx2 s2))
+(define (column*=? idx1 col1 idx2 col2)
+  (define ((make-ref idx col) i)
+    (column-ref col (index-ref idx i)))
+  (define ref1 (make-ref idx1 col1))
+  (define ref2 (make-ref idx2 col2))
   (and (= (index-size idx1) (index-size idx2))
-       (equal? (column-name s1) (column-name s2))
+       (equal? (column-name col1) (column-name col2))
        (for/and ([i (in-indices idx1)])
          (equal? (ref1 i) (ref2 i)))))
 
@@ -86,8 +86,8 @@
     [else v]))
 
 (define (column-ref col i)
-  (define si (index-ref (column-index col) i))
-  (define v (store-ref (column-store col) si))
+  (define col-i (index-ref (column-index col) i))
+  (define v (store-ref (column-store col) col-i))
   (apply-column-projection col v))
 
 (define (column-property-ref col property [default #f])
@@ -151,8 +151,8 @@
                #:projection projection
                #:properties properties))
 
-(define (column-push-index s idx)
-  (struct-copy column s [index (index-compose (column-index s) idx)]))
+(define (column-push-index col idx)
+  (struct-copy column col [index (index-compose (column-index col) idx)]))
 
 (define (column-compact? col)
   (and (not (column-projection col))

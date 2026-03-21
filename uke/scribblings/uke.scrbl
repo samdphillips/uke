@@ -69,8 +69,8 @@ Contains all bindings from @racketmodname[uke/dataframe],
                                    [col-name symbol?] ...)
          dataframe?]
 
-@defproc[(dataframe-reorder-column [df dataframe?]
-                                   [col-names (listof symbol?)])
+@defproc[(dataframe-reorder-columns [df dataframe?]
+                                    [col-names (listof symbol?)])
          dataframe?]
 
 @defproc[(dataframe-reverse-rows [df dataframe?]) dataframe?]
