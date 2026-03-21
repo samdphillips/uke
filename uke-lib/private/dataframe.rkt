@@ -170,19 +170,25 @@
 
 ;; XXX: dataframe-rename-column
 
-;; XXX: this looks weird
 (define (dataframe-reorder-columns df col-names)
-  (define col*
-    (for/list ([name (in-list col-names)])
-      (dataframe-column-ref df name)))
-  (define (reorder s*)
-    (for/list ([name (in-list col-names)])
-      (define fail
-        (dataframe-column-ref-failure 'dataframe-reorder-column name))
-      (or (for/first ([col (in-list s*)]
-                      #:when (equal? (column-name col) name))
-            col)
-          (fail))))
+  (define (reorder cols)
+    (define order
+      (for/hash ([name (in-list col-names)]
+                 [i (in-naturals)])
+        (values name i)))
+    (define col-vec (make-vector (length col-names) #f))
+    (for ([col (in-list cols)]
+          #:do [(define col-name (column-name col))]
+          #:when (hash-has-key? order col-name))
+      (vector-set! col-vec (hash-ref order col-name) col))
+
+    ;; simpler to validate column names here
+    (for ([col (in-vector col-vec)]
+          [col-name (in-list col-names)])
+      (unless col
+        ((dataframe-column-ref-failure 'dataframe-reorder-columns col-name))))
+
+    (vector->list col-vec))
   (dataframe-column*-update df reorder))
 
 (define (dataframe-reverse-rows df)
