@@ -277,42 +277,42 @@
       [(_ (col:col-spec ...) for-clauses body ...+)
        #:with this-syntax this-syntax
        #:do [(define stride (length (syntax-e #'(col ...))))]
-       #:with (col-v ...) (generate-temporaries #'(col.name ...))
+       #:with (col-temp ...) (generate-temporaries #'(col.name ...))
        #:with (ks ...) (for/list ([i (in-range stride)]) #`'#,i)
        #:with stride #`'#,stride
        #:with _for/fold for-stx
        #'(let ()
            (define init-rows 16)
-           (define (build st size)
+           (define (build vec size)
              ;; XXX: make store immutable
-             (define col-v
-               (make-column 'col
+             (define col-temp
+               (make-column 'col.name
                             (make-linear-index size ks stride)
                             #:properties
                             (hash {~@ 'col.prop-name col.prop-expr} ...)
-                            st))
+                            vec))
              ...
              (make-dataframe #:index (make-linear-index size)
-                             (list col-v ...)))
+                             (list col-temp ...)))
            (_for/fold this-syntax
-             ([s (make-vector (* init-rows stride) (void))]
+             ([vec (make-vector (* init-rows stride) (void))]
               [i 0] [j 0] [k (sub1 init-rows)]
-              #:result (build s j))
+              #:result (build vec j))
              for-clauses
              (call-with-values
               (λ () body ...)
-              (λ (col ...)
-                (vector-set! s (+ i ks) col)
+              (λ (col-temp ...)
+                (vector-set! vec (+ i ks) col-temp)
                 ...
-                (define (next s k) (values s (+ i stride) (add1 j) (sub1 k)))
+                (define (next vec k) (values vec (+ i stride) (add1 j) (sub1 k)))
                 (cond
                   [(zero? k)
                    (define k (ceiling (* 1/2 (add1 j))))
-                   (define next-s (make-vector (* (+ k j 1) stride) (void)))
-                   (vector-copy! next-s 0 s)
-                   (next next-s k)]
+                   (define next-vec (make-vector (* (+ k j 1) stride) (void)))
+                   (vector-copy! next-vec 0 vec)
+                   (next next-vec k)]
                   [else
-                   (next s k)])))))])))
+                   (next vec k)])))))])))
 
 (define-syntax for/dataframe (make-for/dataframe #'for/fold/derived))
 (define-syntax for*/dataframe (make-for/dataframe #'for*/fold/derived))
