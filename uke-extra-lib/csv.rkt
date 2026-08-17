@@ -5,7 +5,8 @@
          racket/unsafe/ops
          uke/column
          uke/dataframe
-         uke/index)
+         uke/index
+         uke/store)
 
 (provide csv->dataframe)
 
@@ -55,7 +56,7 @@
   (define store
     (unsafe-vector*->immutable-vector!
      (for/vector ([r rows] #:when (check-column-mismatch r)) r)))
-  (define idx (make-linear-index (vector-length store)))
+  (define idx (make-linear-index (store-length store)))
   (define col*
     (for/list ([name (in-list names)]
                [i (in-naturals)])
