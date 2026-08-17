@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require (for-label racket
+                     racket/mutability
                      uke
                      uke/machete))
 
@@ -23,7 +24,9 @@ Contains all bindings from @racketmodname[uke/dataframe],
 @defmodule[uke/dataframe #:no-declare]
 @declare-exporting[uke/dataframe uke]
 
-@defproc[(dataframe? [v any/c]) boolean?]
+@defproc[(dataframe? [v any/c]) boolean?]{
+  Returns @racket[#t] if @racket[v] is a dataframe, @racket[#f] otherwise.
+}
 
 @defproc[(make-dataframe [cols (listof column?)]
                          [#:index index index?])
@@ -129,7 +132,9 @@ Contains all bindings from @racketmodname[uke/dataframe],
 @defmodule[uke/column #:no-declare]
 @declare-exporting[uke/column uke #:packages ("uke-lib")]
 
-@defproc[(column? [v any/c]) boolean?]
+@defproc[(column? [v any/c]) boolean?]{
+  Returns @racket[#t] if @racket[v] is a column, @racket[#f] otherwise.
+}
 
 @defproc[(make-column [name symbol?]
                       [index index?]
@@ -235,7 +240,9 @@ Contains all bindings from @racketmodname[uke/dataframe],
 @defmodule[uke/index #:no-declare]
 @declare-exporting[uke/index uke #:packages ("uke-lib")]
 
-@defproc[(index? [v any/c]) boolean?]
+@defproc[(index? [v any/c]) boolean?]{
+  Returns @racket[#t] if @racket[v] is an index, @racket[#f] otherwise.
+}
 
 @defproc[(index-size [idx index?]) nonnegative-integer?]
 
@@ -303,7 +310,11 @@ Contains all bindings from @racketmodname[uke/dataframe],
 @defmodule[uke/store #:no-declare]
 @declare-exporting[uke/store uke #:packages ("uke-lib")]
 
-@defproc[(store? [v any/c]) boolean?]
+@defproc[(store? [v any/c]) boolean?]{
+  Returns @racket[#t] if @racket[v] is a store, @racket[#f] otherwise.
+
+  An @racket[immutable-vector?] is also a store.
+}
 
 @defproc[(store-length [s store?]) nonnegative-integer?]
 
