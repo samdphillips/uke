@@ -1,16 +1,8 @@
 #lang racket/base
 
-(provide immutable-vector?
-         immutable-hash?
-         list->immutable-vector
+(provide list->immutable-vector
          sequence->list/length
          vector-valid-position?)
-
-(define ((make-immutable-pred pred?) v)
-  (and (pred? v) (immutable? v)))
-
-(define immutable-vector? (make-immutable-pred vector?))
-(define immutable-hash?   (make-immutable-pred hash?))
 
 (define (list->immutable-vector vs)
   (apply vector-immutable vs))
