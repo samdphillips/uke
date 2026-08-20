@@ -229,7 +229,7 @@
   (define groups (dataframe-group-index df key-func))
   (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
     (define group-df
-      (dataframe-index-update df (λ (idx) (index-pick idx g))))
+      (dataframe-index-update df (λ (idx) (index-pick idx (sort g <)))))
     ;; XXX: short-cut here, instead of making a new dataframe and index the
     ;;      aggr-func takes original dataframe and list of indices
     (values k (aggr-func group-df))))
