@@ -322,11 +322,12 @@ Contains all bindings from @racketmodname[uke/dataframe],
                     [i nonnegative-integer?])
          any/c]
 
-@defproc[(store-copy [s store?]) store?]
-
 @defproc[(store-append [s1 store?]
                        [s2 store?])
-         store?]
+         store?]{
+  Create a fresh store that contains all of the elements of @racket[s1] followed
+  by the elements of @racket[s2].
+}
 
 @subsection{Exceptions}
 @defmodule[uke/error #:no-declare]

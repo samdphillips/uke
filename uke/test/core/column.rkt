@@ -5,6 +5,7 @@
          uke/column
          uke/error
          uke/index
+         uke/store
          (submod uke/private/index for-test))
 
 ;; There are 2**3 combinations of arguments for `vector->column`.  The cases are enumerated
@@ -17,6 +18,7 @@
 (test-case "vector->column mutable w/ defaults"
   (define v (build-vector 10 values))
   (define s (vector->column 'a v))
+  (check-pred store? (column-store s))
   (check-match (column-index s) (linear-index 10 0 1))
   (check-equal? (sequence->list s) '(0 1 2 3 4 5 6 7 8 9))
   (vector-set! v 0 10)
@@ -33,6 +35,7 @@
 (test-case "vector->column mutable w/ size + default offset"
   (define v (build-vector 10 values))
   (define s (vector->column 'a v #:size 5))
+  (check-pred store? (column-store s))
   (check-match (column-index s) (linear-index 5 0 1))
   (check-equal? (sequence->list s) '(0 1 2 3 4))
   (vector-set! v 0 10)
@@ -50,6 +53,7 @@
 (test-case "vector->column mutable w/ default size + offset"
   (define v (build-vector 10 values))
   (define s (vector->column 'a v #:offset 2))
+  (check-pred store? (column-store s))
   (check-match (column-index s) (linear-index 8 0 1))
   (check-equal? (sequence->list s) '(2 3 4 5 6 7 8 9))
   (vector-set! v 0 10)
@@ -67,6 +71,7 @@
 (test-case "vector->column mutable w/ size + offset"
   (define v (build-vector 10 values))
   (define s (vector->column 'a v #:size 5 #:offset 2))
+  (check-pred store? (column-store s))
   (check-match (column-index s) (linear-index 5 0 1))
   (check-equal? (sequence->list s) '(2 3 4 5 6))
   (vector-set! v 0 10)
@@ -76,6 +81,7 @@
 (test-case "vector->column immutable w/ size + offset"
   (define v (vector->immutable-vector (build-vector 10 values)))
   (define s (vector->column 'a v #:size 5 #:offset 2))
+  (check-pred store? (column-store s))
   (check-match (column-index s) (linear-index 5 2 1))
   (check-equal? (sequence->list s) '(2 3 4 5 6)))
 
@@ -93,6 +99,7 @@
 
 (test-case "build-column"
   (define s (build-column 'a 10 values))
+  (check-pred store? (column-store s))
   (check-match (column-index s) (linear-index 10 0 1))
   (check-equal? (sequence->list s) '(0 1 2 3 4 5 6 7 8 9)))
 

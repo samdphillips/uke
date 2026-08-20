@@ -289,14 +289,14 @@
        #:with _for/fold for-stx
        #'(let ()
            (define init-rows 16)
-           (define (build vec size)
-             ;; XXX: make store immutable
+           (define (build mstore size)
+             (define store (unsafe-vector*->immutable-vector! mstore))
              (define col-temp
                (make-column 'col.name
                             (make-linear-index size ks stride)
                             #:properties
                             (hash {~@ 'col.prop-name col.prop-expr} ...)
-                            vec))
+                            store))
              ...
              (make-dataframe #:index (make-linear-index size)
                              (list col-temp ...)))

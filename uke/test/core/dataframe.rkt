@@ -7,7 +7,15 @@
          uke/error
          uke/index
          uke/machete
+         uke/store
          "../b2t2-tables.rkt")
+
+(test-case "for/dataframe basic check"
+  (define df (for/dataframe (a) ([i 5]) i))
+  (define col (dataframe-column-ref df 'a))
+  (check-equal? (dataframe-num-rows df) 5)
+  (check-pred column? col)
+  (check-pred store? (column-store col)))
 
 (test-case "dataframe-reverse-rows linear-index"
   (define df (for/dataframe (a) ([i 10]) i))
