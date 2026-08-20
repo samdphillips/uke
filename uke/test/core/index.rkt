@@ -190,8 +190,22 @@
   (check-equal? (index-ref s3 9) 38))
 
 (test-case "index-pick"
+  (define i0* '(0 5 25 55 75))
+  (define i1* (reverse i0*))
+  (define i2* (in-list i0*))
+  (define i3* (in-list i1*))
+
   (define i0 (make-linear-index 100))
-  (define i1 (index-pick i0 '(0 5 25 55 75)))
-  (check-equal? (index-size i1) 5)
-  (check-equal? (for/list ([i (in-indices i1)]) (index-ref i1 i))
-                '(0 5 25 55 75)))
+  (define i1 (index-pick i0 i0*))
+  (define i2 (index-pick i0 i1*))
+  (define i3 (index-pick i0 i2*))
+  (define i4 (index-pick i0 i3*))
+
+  (define (check i rev?)
+    (check-equal? (index-size i) 5)
+    (check-equal? (for/list ([j (in-indices i)]) (index-ref i j))
+                  ((if rev? reverse values) '(0 5 25 55 75))))
+  (check i1 #f)
+  (check i2 #t)
+  (check i3 #f)
+  (check i4 #t))
