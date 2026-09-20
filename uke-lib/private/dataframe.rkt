@@ -41,7 +41,19 @@
 
 ;; XXX: column-metadata access
 
-(struct dataframe (index column*) #:transparent)
+(define (do-dataframe-write v outp mode)
+  (write-string "#<dataframe>" outp))
+
+(define (install-dataframe-write! f)
+  (set! do-dataframe-write f))
+
+(module* for-dataframe-write #f
+  (provide install-dataframe-write!))
+
+(struct dataframe (index column*)
+  #:property prop:custom-write
+  (λ (v outp mode) (do-dataframe-write v outp mode))
+  #:transparent)
 
 (define (make-dataframe col-list
                         #:index an-index)
