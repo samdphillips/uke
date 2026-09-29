@@ -2,6 +2,7 @@
 
 (require (for-syntax racket/base
                      racket/syntax)
+         racket/match
          racket/unsafe/ops
          syntax/parse/define
 
@@ -54,13 +55,24 @@
   (λ (v outp mode) (do-dataframe-write v outp mode))
   #:transparent)
 
+(define (calculate-compatible-index col-list)
+  (match col-list
+    [(list col) (make-linear-index (column-size col))]
+    [_ (error 'make-dataframe "cannot calculate compatible index")]))
+
 (define (make-dataframe col-list
-                        #:index an-index)
-  (check-index-compatible* 'make-dataframe
+                        #:index [an-index #f])
+  (define use-index
+    (cond
+      [an-index
+       (check-index-compatible* 'make-dataframe
                            an-index
                            (for/list ([s (in-list col-list)])
                              (column-index s)))
-  (dataframe an-index col-list))
+       an-index]
+      [else
+       (calculate-compatible-index col-list)]))
+  (dataframe use-index col-list))
 
 (define (dataframe-index-update df f)
   (struct-copy dataframe df [index (f [dataframe-index df])]))
