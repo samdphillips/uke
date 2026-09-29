@@ -23,7 +23,7 @@
 (define (do-show showf widths tbl)
   (showf tbl
          #:col-widths
-         (map list widths)
+         widths
          #:table-border
          '(heavy solid)
          #:row-align
@@ -38,8 +38,15 @@
     (define tbl (dataframe->table nrows df))
     (do-show uni-table->pict widths tbl)))
 
-(define (show df #:nrows [nrows (default-show-rows)] #:widths [widths null])
+(define (show df #:nrows [nrows (default-show-rows)] #:widths [maybe-widths #f])
   (define tbl (dataframe->table nrows df))
+  (define widths
+    (cond
+      [maybe-widths maybe-widths]
+      [else
+       (for/list ([col (in-list (dataframe-column* df))])
+         (define w (column-render-width col))
+         (if (null? w) w (list w)))]))
   (do-show print-uni-table widths tbl))
 
 (define default-show-rows (make-parameter 10))

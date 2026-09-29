@@ -30,6 +30,7 @@
          column-compact
          column-slice
          column-render-cell
+         column-render-width
          build-column
          ->column
          vector->column
@@ -175,6 +176,9 @@
 (define (column-render-cell col v)
   (define fmt (column-property-ref col '#:render ~a))
   (fmt v))
+
+(define (column-render-width col)
+  (column-property-ref col '#:render-width null))
 
 (define (build-column name
                       size
