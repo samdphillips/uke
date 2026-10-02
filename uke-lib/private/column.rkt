@@ -29,6 +29,7 @@
          column-compact?
          column-compact
          column-slice
+         default-column-render-cell
          column-render-cell
          column-render-width
          build-column
@@ -173,8 +174,10 @@
 (define (column-slice col start [size (- (column-size col) start)])
   (column-index-update col (λ (idx) (index-slice idx start size))))
 
+(define default-column-render-cell (make-parameter ~a))
+
 (define (column-render-cell col v)
-  (define fmt (column-property-ref col '#:render ~a))
+  (define fmt (column-property-ref col '#:render (default-column-render-cell)))
   (fmt v))
 
 (define (column-render-width col)
