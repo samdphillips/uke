@@ -2,7 +2,8 @@
 
 (require uke
          file/gunzip
-         gregor)
+         gregor
+         net/url)
 
 (provide (all-defined-out))
 
@@ -93,6 +94,20 @@
             (num 15 17)
             (num 18 20)
             #:tz tz)))
+
+(define (classify-user-agent s)
+  (match s
+    [(pregexp #px"(bot|crawler|spider|slurp|scrap|spider|crawl)") 'bot]
+    [(pregexp #px"(ipad|playbook|silk|kindle|android(?!.*mobile))") 'tablet]
+    [(pregexp #px"(mobi|iphone|ipod|blackberry|opera mini|fennec)") 'mobile]
+    [_ 'desktop]))
+
+(define (normalize-url s)
+    (url->string
+     (struct-copy url (string->url s)
+                  [host #f]
+                  [port #f]
+                  [scheme #f])))
 
 ;; https://www.movable-type.co.uk/scripts/gis-faq-5.1.html
 ;; Earth radius assuming sphere of WGS84 ellipsoid

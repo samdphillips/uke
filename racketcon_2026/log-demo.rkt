@@ -1,120 +1,40 @@
 #lang racket
 
 (require uke
+         uke/machete
          uke/machete/show
          gregor
          "utils.rkt")
 
-(define log-line-pat
-  #px"^(\\S+) \\S+ (\\S+) \\[([^]]+)\\] \"([^\"]+)\" (\\d+) (\\d+|-) \"([^\"]*)\" \"([^\"]*)\"")
-
-(define request-pat #px"^(\\S+) (\\S+)")
-
 #;
-(define log-lines
-  (sequence-fold
-   (λ (s fname) (sequence-append s (gz-file->lines fname)))
-   null
-   (directory-list "fewmets-logs" #:build? #t)))
-
-#;
-(define raw-log-column
-  (sequence->column 'raw-log
-                    log-lines
-                    #:properties
-                    (hash '#:render ~.s)))
-#;
-(define df0
-  (make-dataframe
-   (list raw-log-column)))
-
-#;
-df0
-
-#;
-(dataframe-num-rows df0)
-
-
-#;
-(define match-column
-  (column-projection-update (column-name-update raw-log-column (λ (_) 'match-column))
-                            (λ (_f)
-                              (λ (s)
-                                (define m (regexp-match log-line-pat s))
-                                (and m (list->vector (cdr m)))))))
-
-#;
-(define df1
-  (dataframe-column*-update df0 (λ (cols) (append cols (list match-column)))))
-
-#;
-(define match-column
-  (column-compact
-   (column-projection-update (column-name-update raw-log-column (λ (_) 'match-column))
-                             (λ (_f)
-                               (λ (s)
-                                 (define m (regexp-match log-line-pat s))
-                                 (and m (list->vector (cdr m))))))))
-
-#;
-(define df1
-  (dataframe-column*-update df0 (λ (_cols) (list match-column))))
-
-;#;
-(define (convert-apache-log-time s)
-  (define (num i j)
-    (string->number (substring s i j)))
-  (with-handlers ([exn:fail? (λ (e) #f)])
-    (define mon
-      (match (substring s 3 6)
-        ["Jan" 1]
-        ["Feb" 2]
-        ["Mar" 3]
-        ["Apr" 4]
-        ["May" 5]
-        ["Jun" 6]
-        ["Jul" 7]
-        ["Aug" 8]
-        ["Sep" 9]
-        ["Oct" 10]
-        ["Nov" 11]
-        ["Dec" 12]))
-    (define tz
-      (* (if (equal? "-" (substring s 21 22)) -60 60)
-         (+ (* 60 (num 22 24)) (num 24 26))))
-    (moment (num 7 11)
-            mon
-            (num 0 2)
-            (num 12 14)
-            (num 15 17)
-            (num 18 20)
-            #:tz tz)))
-
-#;
-(define df1
+(define df-log-raw
   (for*/dataframe ([raw-logs #:render ~.s])
     ([fname (directory-list "fewmets-logs" #:build? #t)]
      [line (gz-file->lines fname)])
     line))
 
-(define df1
-  (for*/dataframe ([src
-                    #:render-width 20]
+#;
+(define df-log
+  (for*/dataframe ([src #:render-width 20]
                    [datetime
                     #:render-width 26
                     #:render moment->iso8601/tzid]
-                   request response-code response-size referer
-                   [user-agent
-                    #:render-width 30])
+                   request-method request-path response-code
+                   response-size referer
+                   [user-agent #:render-width 30])
     ([fname (directory-list "fewmets-logs" #:build? #t)]
      [line (gz-file->lines fname)])
     (match line
-      [(pregexp log-line-pat
+      [(pregexp apache-log-line-pat
                 (list _ src _user datetime request response-code
                       response-size referer user-agent))
+       (match-define
+         (or (pregexp http-request-pat (list _ request-method request-path))
+             (app (λ (_) (values #f #f)) request-method request-path))
+         request)
        (values src
                (convert-apache-log-time datetime)
-               request
+               request-method request-path
                response-code
                (string->number response-size)
                referer
@@ -122,20 +42,56 @@ df0
       [_
        (values #f #f #f #f #f #f #f)])))
 
-
 ;; top 404 error requests
-
-(define df2
+#;
+(define df-not-found
   ;; get-response-code : nonnegative-integer? -> string?
-  (let* ([get-response-code (dataframe-column-lift df1 values 'response-code)])
-    (dataframe-select df1 (λ (i) (equal? "404" (get-response-code i))))))
+  (let* ([get-response-code (dataframe-column-lift df-log values 'response-code)])
+    (dataframe-select df-log (λ (i) (equal? "404" (get-response-code i))))))
 
-(dataframe-num-rows df1)
-(dataframe-num-rows df2)
+#;
+(define df-not-found
+  (~> (df-log)
+      (where (response-code) (equal? "404"))))
 
-(eq? (column-store (dataframe-column*-ref df1 'response-code #f values))
-     (column-store (dataframe-column*-ref df2 'response-code #f values)))
+;; same stores
+#;#;#;
+(dataframe-num-rows df-log)
+(dataframe-num-rows df-not-found)
 
-;; "real" users
+(eq? (column-store (dataframe-column*-ref df-log 'response-code #f values))
+     (column-store (dataframe-column*-ref df-not-found 'response-code #f values)))
+
+;; (classify-user-agent s) -> (or/c 'bot 'tablet 'mobile 'desktop)
+#;
+(define df-not-found-count-by-type
+  (~> (df-not-found)
+      (group (user-agent)
+             #:key classify-user-agent
+             #:aggregate dataframe-num-rows)
+      (dataframe-column-rename '([key . user-type] [groups . count]))))
+
+;; "real" users page visits
+#;
+(define df-page-visits
+  (~> (df-log)
+      (where (response-code) (~> (regexp-match? #px"[45].." _) NOT))
+      (where (user-agent) (~> classify-user-agent (equal? 'desktop)))
+      (create
+       [request-path (request-path) normalize-url])
+      (group (request-path) #:key values #:aggregate dataframe-num-rows)
+      (dataframe-column-rename '([key . request-path] [groups . count]))
+      (dataframe-sort 'count >)))
 
 ;; top time of day visitors
+#;
+(define-values (df-log-hour-visits df-log-dow-visits)
+  (~> (df-log)
+      (create [hour (datetime) ->hours]
+              [dow (datetime) ->wday])
+      (-< (~> (group (hour) #:key values #:aggregate dataframe-num-rows)
+              (dataframe-column-rename '([key . hour] [groups . count]))
+              (dataframe-sort 'hour <))
+          (~> (group (dow) #:key values #:aggregate dataframe-num-rows)
+              (dataframe-column-rename '([key . dow] [groups . count]))
+              (dataframe-sort 'dow <)))))

@@ -23,7 +23,6 @@ What US counties with the same name are closest?
 
 (define df-counties-latlng
   (~> (df-all-counties)
-
       ;; drop unneeded columns
       (slice
        (not (or county_ascii county_full county_fips state_name population)))
@@ -38,6 +37,8 @@ What US counties with the same name are closest?
 (cll-county 2)
 |#
 
+
+;; self-join renaming columns
 (define df-counties-latlng-joined
   (let ([df-cll-right (dataframe-column-rename-append df-counties-latlng 2)])
     (dataframe-left-join df-counties-latlng (dataframe-column-lift df-counties-latlng values 'county) null
