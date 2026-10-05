@@ -2,11 +2,6 @@
 
 (require slideshow/code)
 
-(define (string-blank? v)
-  (and (string? v)
-       (or (string=? "" v)
-           (string=? "\n" v))))
-
 (define (tt/d d v)
   (let ([size (+ (or (current-tt-font-size) (current-font-size)) d)])
     (parameterize ([current-tt-font-size size])
@@ -41,6 +36,12 @@
  @t{RacketCon 2021}
  @item{Slicing Tabular Data with Sawzall}
  @item{Qi: A Functional, Flow-Oriented DSL})
+
+(slide
+ #:title "Uke Core: Index"
+ (vc-append
+  @t{"All problems in computer science can be solved}
+  @t{by another level of indirection."}))
 
 (slide
  #:title "Uke Core: Index"
