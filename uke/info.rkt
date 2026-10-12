@@ -2,6 +2,7 @@
 
 (define name "uke")
 (define collection "uke")
+(define pkg-desc "Immutable dataframes for Racket (full package: documentation)")
 (define version "2025.4.22")
 (define deps '("base" "uke-lib" "uke-extra-lib" "uke-machete" "rackunit-lib"))
 (define build-deps '("scribble-lib" "racket-doc"))

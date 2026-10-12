@@ -2,6 +2,7 @@
 
 (define name "uke-lib")
 (define collection "uke")
+(define pkg-desc "Immutable dataframes for Racket (implementation only)")
 (define version "2025.4.22")
 (define deps '("base"))
 (define pkg-authors '(samdphillips@gmail.com))
