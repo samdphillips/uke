@@ -1,0 +1,29 @@
+on:
+  push:
+  pull_request_target:
+    branches:
+      - main
+  schedule:
+  - cron: "40 16 * * FRI"
+jobs:
+  test:
+    strategy:
+      matrix:
+        racket-version: ["8.18", "9.1", "9.2", "pre-release", "stable", "current"]
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+    - name: install racket
+      uses: Bogdanp/setup-racket@v1.15
+      with:
+        architecture: 'x64'
+        distribution: 'full'
+        variant: "CS"
+        version: ${{ matrix.racket-version }}
+    - name: install base package
+      run: raco pkg install --batch --auto ./uke-lib ./uke-machete ./uke-extra-lib ./uke
+    - name: check dependencies
+      run: raco setup --check-pkg-deps --unused-pkg-deps --pkgs uke uke-lib uke-machete uke-extra-lib
+    - name: run base tests
+      run: raco test --drdr -c uke
