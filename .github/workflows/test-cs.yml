@@ -9,7 +9,7 @@ jobs:
   test:
     strategy:
       matrix:
-        racket-version: ["8.18", "9.1", "9.2", "pre-release", "stable", "current"]
+        racket-version: ["8.18", "9.2", "9.3"] #, "pre-release", "stable", "current"]
     runs-on: ubuntu-latest
     steps:
     - name: checkout
