@@ -123,7 +123,7 @@
       'vector->column
       "column size ~a at offset ~a is out of bounds for vector length ~a"
       col-size col-offset vlen)]
-    [(immutable? vec)
+    [(store? vec)
      (make-column name
                   (make-linear-index col-size col-offset)
                   vec
@@ -134,8 +134,7 @@
      (define j (+ col-offset col-size))
      (make-column name
                   (make-linear-index col-size 0 1)
-                  (unsafe-vector*->immutable-vector!
-                   (vector-copy vec i j))
+                  (store-copy vec i j)
                   #:projection projection
                   #:properties properties)]))
 
