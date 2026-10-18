@@ -6,7 +6,12 @@
                      uke/machete)
           scribble/example)
 
-@(define uke-doc-eval (make-eval-factory '(uke uke/machete)))
+@(begin
+   (define make-base-uke-doc-eval (make-eval-factory '(uke uke/machete)))
+   (define (make-uke-doc-eval)
+     (define ev (make-base-uke-doc-eval))
+     (ev '(default-show-padding 2))
+     ev))
 
 @title{uke}
 @author[(author+email "Sam Phillips" "samdphillips@gmail.com")]
@@ -93,10 +98,10 @@ Contains all bindings from @racketmodname[uke/dataframe],
  @racket[i*].  The resulting dataframe will contain rows in the same
  order as @racket[i*].
  @examples[
- #:eval (uke-doc-eval)
- (define df0 (for/dataframe (a) ([i 3]) (* 2 i)))
- (define df1 (dataframe-pick df0 '(0 2 1)))
- (for/list ([v (dataframe-column-ref df1 'a)]) v)
+ #:eval (make-uke-doc-eval)
+ (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
+ df0
+ (dataframe-pick df0 '(0 2 1))
  ]
 }
 
