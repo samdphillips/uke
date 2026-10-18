@@ -26,6 +26,7 @@
          dataframe-compact?
          dataframe-compact
          dataframe-select
+         dataframe-pick
          dataframe-slice
          dataframe-group-index
          dataframe-group
@@ -217,6 +218,10 @@
     (index-select idx pred?))
   (dataframe-index-update df select))
 
+(define (dataframe-pick df i*)
+  (define (pick idx) (index-pick idx i*))
+  (dataframe-index-update df pick))
+
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
   (dataframe-index-update df (λ (idx) (index-slice idx start size))))
 
@@ -229,7 +234,7 @@
   (define groups (dataframe-group-index df key-func))
   (for/dataframe (key groups) ([(k g) (in-immutable-hash groups)])
     (define group-df
-      (dataframe-index-update df (λ (idx) (index-pick idx g))))
+      (dataframe-index-update df (λ (idx) (index-pick idx (sort g <)))))
     ;; XXX: short-cut here, instead of making a new dataframe and index the
     ;;      aggr-func takes original dataframe and list of indices
     (values k (aggr-func group-df))))

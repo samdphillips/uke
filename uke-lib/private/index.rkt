@@ -121,7 +121,7 @@
     [_ #f]))
 
 (define (index-pick idx i*)
-  (index-extract idx #:indices (sort i* <)))
+  (index-extract idx #:indices i*))
 
 (define (index-select idx pred?)
   (index-extract idx #:select pred?))

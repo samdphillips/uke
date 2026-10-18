@@ -99,6 +99,19 @@
   (check-equal? (sequence->list (dataframe-column-ref students2 'name))
                 '("Eve" "Alice")))
 
+(test-case "dataframe-pick"
+  (define df0 (for/dataframe (a) ([i 10]) i))
+  (define df1 (dataframe-pick df0 '(0 1 2 3)))
+  (define df2 (dataframe-pick df0 '(2 2 2)))
+  (define df3 (dataframe-pick df0 '(9 8 7)))
+
+  (check-true (column=? (->column 'a '(0 1 2 3))
+                        (dataframe-column-ref df1 'a)))
+  (check-true (column=? (->column 'a '(2 2 2))
+                        (dataframe-column-ref df2 'a)))
+  (check-true (column=? (->column 'a '(9 8 7))
+                        (dataframe-column-ref df3 'a))))
+
 (test-case "dataframe-column-lift - linear"
   (define df0 (for/dataframe (a b) ([i 3]) (values i (* 2 i))))
   (define f (dataframe-column-lift df0 list 'a 'b))
