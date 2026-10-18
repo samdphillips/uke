@@ -26,6 +26,7 @@
          dataframe-compact?
          dataframe-compact
          dataframe-select
+         dataframe-pick
          dataframe-slice
          dataframe-group-index
          dataframe-group
@@ -216,6 +217,10 @@
   (define (select idx)
     (index-select idx pred?))
   (dataframe-index-update df select))
+
+(define (dataframe-pick df i*)
+  (define (pick idx) (index-pick idx i*))
+  (dataframe-index-update df pick))
 
 (define (dataframe-slice df start [size (- (dataframe-num-rows df) start)])
   (dataframe-index-update df (λ (idx) (index-slice idx start size))))

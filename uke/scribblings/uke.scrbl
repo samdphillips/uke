@@ -3,7 +3,10 @@
 @(require (for-label racket
                      racket/mutability
                      uke
-                     uke/machete))
+                     uke/machete)
+          scribble/example)
+
+@(define uke-doc-eval (make-eval-factory '(uke uke/machete)))
 
 @title{uke}
 @author[(author+email "Sam Phillips" "samdphillips@gmail.com")]
@@ -82,6 +85,20 @@ Contains all bindings from @racketmodname[uke/dataframe],
 @defproc[(dataframe-select [df dataframe?]
                            [choose? (-> nonnegative-integer? boolean?)])
          dataframe?]
+
+@defproc[(dataframe-pick [df dataframe?]
+                         [i* (sequence/c nonnegative-integer?)])
+         dataframe?]{
+ Returns a dataframe like @racket[df] containing only the indices in
+ @racket[i*].  The resulting dataframe will contain rows in the same
+ order as @racket[i*].
+ @examples[
+ #:eval (uke-doc-eval)
+ (define df0 (for/dataframe (a) ([i 3]) (* 2 i)))
+ (define df1 (dataframe-pick df0 '(0 2 1)))
+ (for/list ([v (dataframe-column-ref df1 'a)]) v)
+ ]
+}
 
 @defproc[(dataframe-slice [df dataframe?]
                           [start nonnegative-integer?]
