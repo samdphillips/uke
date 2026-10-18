@@ -329,6 +329,14 @@ Contains all bindings from @racketmodname[uke/dataframe],
   by the elements of @racket[s2].
 }
 
+@defproc[(store-copy [s store?]
+                     [i nonnegative-integer? 0]
+                     [j nonnegative-integer? (store-length s)])
+         store?]{
+  Create a fresh store that contains all of the elements of @racket[s] from index
+  @racket[i] to index @racket[j].
+}
+
 @subsection{Exceptions}
 @defmodule[uke/error #:no-declare]
 @declare-exporting[uke/error uke #:packages ("uke-lib")]
